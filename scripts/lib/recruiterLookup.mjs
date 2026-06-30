@@ -37,6 +37,14 @@ const JOB_BOARD_HOSTS = [
 export async function findRecruiterEmail({ companyName, applyUrl }) {
   const domain = domainFromUrl(applyUrl);
 
+  // Hunter first - it's the only one with a genuinely free API tier
+  // (50 lookups/month, no card). Apollo/Lusha API access is effectively
+  // paid-only, so they're tried after, if their keys are set.
+  if (process.env.HUNTER_API_KEY) {
+    const email = await tryHunter({ companyName, domain });
+    if (email) return { email, provider: "hunter" };
+  }
+
   if (process.env.APOLLO_API_KEY) {
     const email = await tryApollo({ companyName, domain });
     if (email) return { email, provider: "apollo" };
@@ -48,6 +56,34 @@ export async function findRecruiterEmail({ companyName, applyUrl }) {
   }
 
   return null;
+}
+
+// Hunter.io domain search: returns emails found at a company (by domain, or
+// by company name if no domain), each tagged with department/position so we
+// can prefer an HR/recruiting contact. One call = one credit.
+// https://hunter.io/api/domain-search
+async function tryHunter({ companyName, domain }) {
+  if (!domain && !companyName) return null;
+  try {
+    const params = new URLSearchParams({ api_key: process.env.HUNTER_API_KEY, limit: "10" });
+    if (domain) params.set("domain", domain);
+    else params.set("company", companyName);
+
+    const response = await fetch(`https://api.hunter.io/v2/domain-search?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(`${response.status} ${await response.text()}`);
+    }
+    const json = await response.json();
+    const emails = json?.data?.emails || [];
+    if (emails.length === 0) return null;
+
+    const isRecruiterish = (e) => /recruit|talent|hr|human res|people|hiring/i.test(`${e.position || ""} ${e.department || ""}`);
+    const pick = emails.find(isRecruiterish) || emails.find((e) => e.type === "personal") || emails[0];
+    return pick?.value || null;
+  } catch (error) {
+    console.log(`Hunter lookup failed: ${error.message}`);
+    return null;
+  }
 }
 
 function looksRevealed(email) {

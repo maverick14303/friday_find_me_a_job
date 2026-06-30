@@ -15,7 +15,7 @@ Technical words: Vercel hosts the dashboard and serverless function. cron-job.or
 - Sends the resume + one cover letter per company through Gmail.
 - Never emails the same company twice - once a company is sent, it's skipped in every future run (see "Never Repeat a Company" below).
 - Reply to the daily email with just a company name to apply to it (see "Reply to Apply" below).
-- Optionally finds a recruiter email via Apollo/Lusha when a posting doesn't list one, only at reply-to-apply time (see "Recruiter Email Enrichment" below).
+- Optionally finds a recruiter email via Hunter.io (free tier) or Apollo/Lusha when a posting doesn't list one, only at reply-to-apply time (see "Recruiter Email Enrichment" below).
 
 ## Required Secrets
 
@@ -42,10 +42,11 @@ If these aren't set, both features are silently skipped and the app behaves as i
 
 Optional, to find recruiter emails when a job posting doesn't list one (used only at reply-to-apply time):
 
-- `APOLLO_API_KEY`: your Apollo.io API key.
-- `LUSHA_API_KEY`: your Lusha API key.
+- `HUNTER_API_KEY`: your Hunter.io API key. **Has a real free tier** (50 lookups/month, no card).
+- `APOLLO_API_KEY`: your Apollo.io API key. API access is effectively paid-only.
+- `LUSHA_API_KEY`: your Lusha API key. API access is a paid add-on.
 
-If both are set, Apollo is tried first and Lusha is the fallback. If neither is set, enrichment is skipped and the reply just sends you the apply link. These are paid, credit-metered services - see "Recruiter Email Enrichment" below.
+Providers are tried in order: Hunter, then Apollo, then Lusha (whichever keys are set). If none are set, enrichment is skipped and the reply just sends you the apply link. See "Recruiter Email Enrichment" below.
 
 ## Gmail Setup With Google Sign-in
 
@@ -116,7 +117,7 @@ Reply to a daily packet email with just the company name (e.g. "TCS Research"). 
 
 1. It looks that company up in `sent_companies` (matches even a partial name).
 2. It regenerates the original resume and that company's exact cover letter.
-3. It finds a recruiter email: first the one scraped from the public posting, and if there was none, it falls back to enrichment (Apollo/Lusha) - see "Recruiter Email Enrichment" below. **If an email is found**, it emails the application directly to that address on your behalf. **If not**, this is skipped.
+3. It finds a recruiter email: first the one scraped from the public posting, and if there was none, it falls back to enrichment (Hunter free tier, or Apollo/Lusha) - see "Recruiter Email Enrichment" below. **If an email is found**, it emails the application directly to that address on your behalf. **If not**, this is skipped.
 4. Either way, it replies to you in the same email thread with the apply link and both PDFs attached, so you can submit it yourself if step 3 didn't apply (or as a record if it did).
 
 Important caveats:
@@ -127,16 +128,23 @@ Important caveats:
 
 ## Recruiter Email Enrichment
 
-When you reply to apply and the public job posting didn't include a recruiter email, the app can look one up via paid enrichment providers. This runs **only at reply time, only for the specific company you chose, and only when no scraped email already exists** - so credits are spent sparingly, never on the daily run.
+When you reply to apply and the public job posting didn't include a recruiter email, the app can look one up via an enrichment provider. This runs **only at reply time, only for the specific company you chose, and only when no scraped email already exists** - so lookups are spent sparingly, never on the daily run.
 
-- Set `APOLLO_API_KEY` and/or `LUSHA_API_KEY`. With both set, Apollo is tried first, Lusha is the fallback.
-- It searches for people at that company with recruiter/talent-acquisition/HR titles and reveals the top match's email.
+Providers are tried in order, using whichever keys are set:
+
+1. **Hunter.io (`HUNTER_API_KEY`) - the free option.** Sign up at <https://hunter.io>, then open Dashboard -> API and copy your key. The free tier gives 50 lookups/month with no credit card. It does a domain search for the company and prefers an HR/recruiting contact.
+2. **Apollo (`APOLLO_API_KEY`)** and **Lusha (`LUSHA_API_KEY`)** - searched after Hunter, but note their API access is effectively **paid-only** (Apollo needs the ~$119/mo Organization plan; Lusha's API is a paid add-on), so a free account on either generally won't work here.
+
+How to add the key (Hunter shown):
+1. Get the key from the Hunter dashboard.
+2. In Vercel: Project -> Settings -> Environment Variables -> add `HUNTER_API_KEY` (Production).
+3. Redeploy (or just push - Vercel redeploys on push if git integration is on).
+
+Notes:
+- Hunter needs a company **domain**, which the app infers from the apply link. For jobs whose only link is a job board (LinkedIn/Indeed/etc.), it passes the company name to Hunter instead, which is less reliable - so some companies still won't resolve to an email, and that's expected.
 - Every provider call is wrapped defensively: a bad key, exhausted credits, no match, or a changed API just returns "no email found" and the reply falls back to link-only - it never breaks the run.
-
-Caveats specific to enrichment:
-- **It costs money.** Each email reveal spends provider credits. Only reply-to-apply triggers it, but each such reply for a company without a scraped email will use a credit.
-- **Endpoints are best-effort.** The Apollo/Lusha API shapes used here follow their documented endpoints but those can change; if a provider changes its API, enrichment will quietly return nothing until the integration is updated. (This was built against the documented APIs but not run against live paid keys.)
 - Returned emails are unverified guesses - the same "double-check before relying on it" caution applies.
+- The Apollo/Lusha adapters follow each provider's documented API shapes but were not run against live paid keys; if a provider changes its API, that adapter quietly returns nothing until updated.
 
 ## ATS Safety Rules
 
