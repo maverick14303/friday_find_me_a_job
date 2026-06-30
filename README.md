@@ -15,6 +15,7 @@ Technical words: Vercel hosts the dashboard and serverless function. cron-job.or
 - Sends the resume + one cover letter per company through Gmail.
 - Never emails the same company twice - once a company is sent, it's skipped in every future run (see "Never Repeat a Company" below).
 - Reply to the daily email with just a company name to apply to it (see "Reply to Apply" below).
+- Optionally finds a recruiter email via Apollo/Lusha when a posting doesn't list one, only at reply-to-apply time (see "Recruiter Email Enrichment" below).
 
 ## Required Secrets
 
@@ -38,6 +39,13 @@ Needed for the never-repeat-a-company and reply-to-apply features:
 - `SUPABASE_ANON_KEY`: your Supabase publishable/anon key.
 
 If these aren't set, both features are silently skipped and the app behaves as if they don't exist - it does not block the rest of the run.
+
+Optional, to find recruiter emails when a job posting doesn't list one (used only at reply-to-apply time):
+
+- `APOLLO_API_KEY`: your Apollo.io API key.
+- `LUSHA_API_KEY`: your Lusha API key.
+
+If both are set, Apollo is tried first and Lusha is the fallback. If neither is set, enrichment is skipped and the reply just sends you the apply link. These are paid, credit-metered services - see "Recruiter Email Enrichment" below.
 
 ## Gmail Setup With Google Sign-in
 
@@ -108,14 +116,27 @@ Reply to a daily packet email with just the company name (e.g. "TCS Research"). 
 
 1. It looks that company up in `sent_companies` (matches even a partial name).
 2. It regenerates the original resume and that company's exact cover letter.
-3. **If a public recruiter email was found** when the job was scraped, it emails the application directly to that address on your behalf - no further confirmation step. **If not**, this is skipped.
+3. It finds a recruiter email: first the one scraped from the public posting, and if there was none, it falls back to enrichment (Apollo/Lusha) - see "Recruiter Email Enrichment" below. **If an email is found**, it emails the application directly to that address on your behalf. **If not**, this is skipped.
 4. Either way, it replies to you in the same email thread with the apply link and both PDFs attached, so you can submit it yourself if step 3 didn't apply (or as a record if it did).
 
 Important caveats:
-- Recruiter emails come from scraping public job postings - they are **not verified**. An auto-sent application can go to a wrong, stale, or unrelated address. Check the confirmation reply each time to see exactly what happened.
+- Recruiter emails are **not verified** - whether scraped from a posting or returned by Apollo/Lusha, an auto-sent application can go to a wrong, stale, or unrelated address. Check the confirmation reply each time to see exactly what happened and which source the address came from.
 - This only works for companies recently emailed by this app (it can't apply to arbitrary companies you type in).
 - It does **not** fill out web application forms (Workday, Greenhouse, Lever, career-site portals, etc.) - that would require a different, much less reliable kind of browser automation per company. When no recruiter email exists, you still have to submit through the link yourself.
 - Needs `SUPABASE_URL`/`SUPABASE_ANON_KEY` (to look up the company) and a Gmail refresh token with the `gmail.modify` scope (to read/reply) - see "Gmail Setup" above if you connected before this feature existed.
+
+## Recruiter Email Enrichment
+
+When you reply to apply and the public job posting didn't include a recruiter email, the app can look one up via paid enrichment providers. This runs **only at reply time, only for the specific company you chose, and only when no scraped email already exists** - so credits are spent sparingly, never on the daily run.
+
+- Set `APOLLO_API_KEY` and/or `LUSHA_API_KEY`. With both set, Apollo is tried first, Lusha is the fallback.
+- It searches for people at that company with recruiter/talent-acquisition/HR titles and reveals the top match's email.
+- Every provider call is wrapped defensively: a bad key, exhausted credits, no match, or a changed API just returns "no email found" and the reply falls back to link-only - it never breaks the run.
+
+Caveats specific to enrichment:
+- **It costs money.** Each email reveal spends provider credits. Only reply-to-apply triggers it, but each such reply for a company without a scraped email will use a credit.
+- **Endpoints are best-effort.** The Apollo/Lusha API shapes used here follow their documented endpoints but those can change; if a provider changes its API, enrichment will quietly return nothing until the integration is updated. (This was built against the documented APIs but not run against live paid keys.)
+- Returned emails are unverified guesses - the same "double-check before relying on it" caution applies.
 
 ## ATS Safety Rules
 
@@ -135,6 +156,7 @@ Important caveats:
 - `scripts/lib/email.mjs` - Gmail API / SMTP delivery, plus shared MIME/OAuth-token helpers reused by the reply flow.
 - `scripts/lib/history.mjs` - Supabase-backed sent-company history (dedup + the data the reply flow looks up).
 - `scripts/lib/gmailInbox.mjs` - reads/replies-to/marks-read inbox messages via the Gmail API.
+- `scripts/lib/recruiterLookup.mjs` - Apollo/Lusha recruiter-email enrichment, used as a reply-time fallback.
 - `scripts/lib/applyFlow.mjs` - the "Reply to Apply" orchestration, polled by `/api/check-replies`.
 - `scripts/lib/{util,http,terms}.mjs` - shared helpers, fetch wrappers, and keyword lists.
 - `scripts/security.mjs` - constant-time secret comparison, shared by the `api/` handlers.

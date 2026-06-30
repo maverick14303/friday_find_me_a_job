@@ -6,6 +6,7 @@ import { findRecentJobByReplyText, markApplied } from "./history.mjs";
 import { buildCoverLetterLines } from "./resume.mjs";
 import { createResumePdf, createCoverLetterPdf } from "./pdf.mjs";
 import { getGmailAccessToken, buildMimeMessage, sendGmailApiRaw } from "./email.mjs";
+import { findRecruiterEmail } from "./recruiterLookup.mjs";
 import { companyKey, safeName } from "./util.mjs";
 
 const RESUME_PATH = path.join(process.cwd(), "data", "resume-profile.json");
@@ -55,8 +56,21 @@ export async function processInboxReplies() {
       });
       const coverPdf = await createCoverLetterPdf(coverLetterLines, `${resume.name} - ${job.company_name} Cover Letter`);
 
-      const recruiterEmail = (job.recruiter_emails || [])[0] || null;
       const alreadyApplied = Boolean(job.applied_at);
+
+      // Prefer a recruiter email scraped at search time; if none, fall back
+      // to paid enrichment (Apollo/Lusha) - only here, only for a company the
+      // user actually chose to apply to. Skipped if already applied.
+      let recruiterEmail = (job.recruiter_emails || [])[0] || null;
+      let recruiterSource = recruiterEmail ? "scraped" : null;
+      if (!recruiterEmail && !alreadyApplied) {
+        const enriched = await findRecruiterEmail({ companyName: job.company_name, applyUrl: job.apply_url });
+        if (enriched) {
+          recruiterEmail = enriched.email;
+          recruiterSource = enriched.provider;
+        }
+      }
+
       if (recruiterEmail && !alreadyApplied) {
         await sendApplicationEmail({
           user,
@@ -77,8 +91,8 @@ export async function processInboxReplies() {
           alreadyApplied
             ? `This was already auto-applied earlier (to ${job.applied_email}), so I haven't re-sent it - here's the packet again for your records.`
             : recruiterEmail
-              ? `I also emailed this application directly to ${recruiterEmail}.`
-              : "No public recruiter email was found for this listing, so please apply using the link above."
+              ? `I also emailed this application directly to ${recruiterEmail} (found via ${recruiterSource}). Note: this address is unverified - double-check before relying on it.`
+              : "No recruiter email was found for this listing (not in the public posting, and enrichment returned nothing), so please apply using the link above."
         ].join("\n\n"),
         attachments: [
           { filename: `${safeName(resume.name)}-resume.pdf`, contentType: "application/pdf", content: resumePdf },
@@ -88,7 +102,7 @@ export async function processInboxReplies() {
 
       await markApplied(companyKey(job.company_name), recruiterEmail);
       await markAsRead(message.id);
-      results.push({ matched: true, company: job.company_name, autoApplied: Boolean(recruiterEmail) });
+      results.push({ matched: true, company: job.company_name, autoApplied: Boolean(recruiterEmail && !alreadyApplied), recruiterSource });
     } catch (error) {
       console.error(`Failed to process reply ${message.id}: ${error.message}`);
       results.push({ matched: false, error: error.message });
