@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ATS Job Assistant</title>
+    <style>
+      :root {
+        --ink: #172026;
+        --muted: #5d6872;
+        --line: #d9e0e6;
+        --paper: #f7f8f5;
+        --surface: #ffffff;
+        --accent: #0f766e;
+        --accent-dark: #0b5f59;
+        --warn: #a16207;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--ink);
+        background: var(--paper);
+      }
+
+      main {
+        width: min(980px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 40px 0;
+      }
+
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 34px;
+        line-height: 1.15;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 22px;
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      input {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 16px;
+      }
+
+      button {
+        min-height: 44px;
+        border: 0;
+        border-radius: 6px;
+        padding: 0 18px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: var(--accent-dark);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        border-radius: 6px;
+        padding: 0 18px;
+        background: #e9f5f3;
+        color: var(--accent-dark);
+        font-size: 15px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .status {
+        min-height: 48px;
+        border-left: 4px solid var(--line);
+        padding: 10px 12px;
+        color: var(--muted);
+        background: #fbfcfd;
+      }
+
+      .status.ok {
+        border-color: var(--accent);
+        color: var(--ink);
+      }
+
+      .status.bad {
+        border-color: var(--warn);
+        color: var(--ink);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        padding: 12px 8px;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 720px) {
+        header,
+        .row {
+          display: block;
+        }
+
+        button {
+          width: 100%;
+          margin-top: 12px;
+        }
+
+        .actions {
+          display: block;
+        }
+
+        .secondary {
+          width: 100%;
+          margin-top: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>ATS Job Assistant</h1>
+          <p>Daily AI/ML fresher job packets for Ankit Keshari.</p>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="row">
+          <div>
+            <label for="secret">Run secret</label>
+            <input id="secret" type="password" autocomplete="current-password" placeholder="Enter your dashboard secret" />
+          </div>
+          <div class="actions">
+            <a class="secondary" href="/api/gmail-start">Connect Gmail</a>
+            <button id="runButton" type="button">Run Now</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div id="status" class="status">Ready. Schedule this Vercel endpoint in cron-job.org for 10:00 AM IST, or click Run Now anytime.</div>
+      </section>
+
+      <section class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>What happens</th>
+              <th>Technical word</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Search</td>
+              <td>Finds public India AI/ML intern and fresher openings.</td>
+              <td>Source adapters</td>
+            </tr>
+            <tr>
+              <td>Rank</td>
+              <td>Scores each job against your real resume.</td>
+              <td>ATS match score</td>
+            </tr>
+            <tr>
+              <td>Create</td>
+              <td>Makes truthful resume and cover letter PDFs.</td>
+              <td>PDF generation</td>
+            </tr>
+            <tr>
+              <td>Send</td>
+              <td>Emails the best 5 job packets to you.</td>
+              <td>SMTP email</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      const button = document.querySelector("#runButton");
+      const statusBox = document.querySelector("#status");
+      const secretInput = document.querySelector("#secret");
+
+      secretInput.value = localStorage.getItem("jobAssistantSecret") || "";
+
+      function setStatus(text, kind) {
+        statusBox.textContent = text;
+        statusBox.className = "status" + (kind ? " " + kind : "");
+      }
+
+      button.addEventListener("click", async () => {
+        const secret = secretInput.value.trim();
+        localStorage.setItem("jobAssistantSecret", secret);
+        button.disabled = true;
+        setStatus("Starting the Vercel job assistant. This can take a little while because it is searching, creating PDFs, and emailing them.", "");
+
+        try {
+          const response = await fetch("/api/run-now", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ secret })
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "Run request failed.");
+          }
+          setStatus("Run finished. Check your Gmail for the packet. If email secrets are missing, the API response will still show the run result.", "ok");
+        } catch (error) {
+          setStatus(error.message, "bad");
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

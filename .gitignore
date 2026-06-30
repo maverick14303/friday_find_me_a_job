@@ -1,0 +1,13 @@
+.env
+.env.local
+node_modules/
+output/
+.vercel/
+*.log
+graphify-out/
+
+.vercel
+
+# Personal data - contains your real name, phone, email, history.
+# Copy data/resume-profile.example.json to data/resume-profile.json and fill it in locally.
+data/resume-profile.json

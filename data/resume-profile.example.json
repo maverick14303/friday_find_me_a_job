@@ -1,0 +1,38 @@
+{
+  "name": "Your Name",
+  "phone": "+1-555-0100",
+  "email": "you@example.com",
+  "alternateEmail": "you@university.edu",
+  "headline": "Your degree | Your focus area",
+  "summary": "2-4 sentence summary of your background, written truthfully - this is what the assistant uses to tailor resumes, so don't pad it with claims you can't back up.",
+  "education": [
+    "Degree, Major, School, Start - End, GPA: X.XX"
+  ],
+  "experience": [
+    {
+      "company": "Company Name",
+      "role": "Your Role",
+      "dates": "Month Year - Month Year",
+      "bullets": [
+        "Truthful, specific bullet describing what you did and the measurable result."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Project Name",
+      "tools": ["Tool1", "Tool2"],
+      "bullets": [
+        "Truthful, specific bullet describing what the project did."
+      ]
+    }
+  ],
+  "skills": {
+    "Languages": ["Python"],
+    "Tools": ["Git"]
+  },
+  "responsibilities": [
+    "Role, Organization, Dates: short description."
+  ],
+  "hobbies": "A short, honest line about your interests"
+}

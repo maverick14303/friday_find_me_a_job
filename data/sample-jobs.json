@@ -1,0 +1,82 @@
+[
+  {
+    "title": "AI/ML Intern",
+    "company": "Wadhwani AI",
+    "location": "Delhi, India",
+    "description": "Internship for students with Python, machine learning, model evaluation, data preprocessing, scikit-learn, and applied AI interest.",
+    "applyUrl": "https://www.wadhwaniai.org/careers/",
+    "source": "sample"
+  },
+  {
+    "title": "Machine Learning Intern",
+    "company": "Peakflo",
+    "location": "Remote, India",
+    "description": "ML internship involving Python, data pipelines, model training, model evaluation, and production-oriented machine learning projects.",
+    "applyUrl": "https://www.peakflo.co/careers",
+    "source": "sample"
+  },
+  {
+    "title": "Intern - AI Engineer",
+    "company": "Ripik.AI",
+    "location": "Noida, India",
+    "description": "AI engineering internship for Python, machine learning, analytics, optimization, and data-driven systems.",
+    "applyUrl": "https://www.ripik.ai/careers",
+    "source": "sample"
+  },
+  {
+    "title": "Python AI/ML Intern",
+    "company": "Durapid Technologies",
+    "location": "Jaipur, India",
+    "description": "Python AI/ML intern role requiring machine learning concepts, data preprocessing, model experimentation, and Python development.",
+    "applyUrl": "https://durapid.com/careers/",
+    "source": "sample"
+  },
+  {
+    "title": "Junior Machine Learning Developer",
+    "company": "Kapidhwaj AI",
+    "location": "Gandhinagar, India",
+    "description": "Junior ML role involving Python, scikit-learn, regression models, data analysis, and model comparison.",
+    "applyUrl": "https://www.kapidhwaj.ai/",
+    "source": "sample"
+  },
+  {
+    "title": "Data Science Intern",
+    "company": "SatSure",
+    "location": "Bengaluru, India",
+    "description": "Data science internship using Python, pandas, numpy, machine learning, regression, evaluation metrics, and visualization.",
+    "applyUrl": "https://www.satsure.co/careers",
+    "source": "sample"
+  },
+  {
+    "title": "Computer Vision Intern",
+    "company": "Nayan",
+    "location": "Delhi NCR, India",
+    "description": "Computer vision internship involving model robustness, embeddings, image analysis, Python, and deep learning basics.",
+    "applyUrl": "https://nayan.co/careers/",
+    "source": "sample"
+  },
+  {
+    "title": "AI Research Intern",
+    "company": "TCS Research",
+    "location": "India",
+    "description": "Research internship for machine learning, adversarial ML, deep learning, model evaluation, Python, and experiment design.",
+    "applyUrl": "https://www.tcs.com/careers",
+    "source": "sample"
+  },
+  {
+    "title": "ML Engineer Intern",
+    "company": "Arya.ai",
+    "location": "Mumbai, India",
+    "description": "Machine learning engineering internship involving Python, model training, TensorFlow or PyTorch, data tools, and evaluation.",
+    "applyUrl": "https://arya.ai/careers",
+    "source": "sample"
+  },
+  {
+    "title": "Software Developer Intern - AI Tools",
+    "company": "Observe.AI",
+    "location": "Bengaluru, India",
+    "description": "Software internship connected to AI tools, Python, data structures, model workflows, and machine learning systems.",
+    "applyUrl": "https://www.observe.ai/careers",
+    "source": "sample"
+  }
+]
