@@ -44,30 +44,3 @@ export function scoreJob(job, resume) {
     missingKeywords
   };
 }
-
-export function getMatchedResumeSkills(resume, job) {
-  const text = normalize(`${job.title} ${job.description} ${job.keywordMatches.join(" ")}`);
-  const result = {};
-  for (const [category, values] of Object.entries(resume.skills)) {
-    const sorted = [...values].sort((a, b) => {
-      const aHit = termPresent(text, a) ? 1 : 0;
-      const bHit = termPresent(text, b) ? 1 : 0;
-      return bHit - aHit || a.localeCompare(b);
-    });
-    result[category] = sorted;
-  }
-  return result;
-}
-
-export function rankProjects(projects, job) {
-  return [...projects].sort((a, b) => scoreTextForJob(`${b.name} ${b.tools.join(" ")} ${b.bullets.join(" ")}`, job) - scoreTextForJob(`${a.name} ${a.tools.join(" ")} ${a.bullets.join(" ")}`, job));
-}
-
-export function rankBullets(bullets, job) {
-  return [...bullets].sort((a, b) => scoreTextForJob(b, job) - scoreTextForJob(a, job));
-}
-
-function scoreTextForJob(text, job) {
-  const normalized = normalize(text);
-  return job.keywordMatches.reduce((score, keyword) => score + (termPresent(normalized, keyword) ? 1 : 0), 0);
-}

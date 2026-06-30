@@ -17,13 +17,15 @@ export async function sendPacketEmail(resume, generated, summary, runDir) {
   }
 
   const attachments = [];
+  if (generated.length > 0) {
+    attachments.push({
+      filename: `${safeName(resume.name)}-resume.pdf`,
+      contentType: "application/pdf",
+      content: await fs.readFile(generated[0].resumeFile)
+    });
+  }
   for (const item of generated) {
     const prefix = safeName(`${item.job.company}-${item.job.title}`).slice(0, 60);
-    attachments.push({
-      filename: `${prefix}-resume.pdf`,
-      contentType: "application/pdf",
-      content: await fs.readFile(item.resumeFile)
-    });
     attachments.push({
       filename: `${prefix}-cover-letter.pdf`,
       contentType: "application/pdf",
@@ -66,6 +68,10 @@ function hasGmailOAuthSecrets() {
 async function sendGmailApiMail({ user, to, subject, text, attachments }) {
   const accessToken = await getGmailAccessToken();
   const raw = buildMimeMessage({ from: user, to, subject, text, attachments });
+  await sendGmailApiRaw({ accessToken, raw });
+}
+
+export async function sendGmailApiRaw({ accessToken, raw, threadId }) {
   const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
     method: "POST",
     headers: {
@@ -73,16 +79,18 @@ async function sendGmailApiMail({ user, to, subject, text, attachments }) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      raw: Buffer.from(raw, "utf8").toString("base64url")
+      raw: Buffer.from(raw, "utf8").toString("base64url"),
+      ...(threadId ? { threadId } : {})
     })
   });
 
   if (!response.ok) {
     throw new Error(`Gmail API send failed: ${response.status} ${await response.text()}`);
   }
+  return response.json();
 }
 
-async function getGmailAccessToken() {
+export async function getGmailAccessToken() {
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -102,13 +110,14 @@ async function getGmailAccessToken() {
   return data.access_token;
 }
 
-function buildMimeMessage({ from, to, subject, text, attachments }) {
+export function buildMimeMessage({ from, to, subject, text, attachments, extraHeaders = [] }) {
   const boundary = `boundary_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   const message = [
     `From: ${from}`,
     `To: ${to}`,
     `Subject: ${subject}`,
     "MIME-Version: 1.0",
+    ...extraHeaders,
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     "",
     `--${boundary}`,

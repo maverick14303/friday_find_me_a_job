@@ -54,6 +54,11 @@ export async function runJobAssistant(options = {}) {
 
   console.log(`Found ${uniqueJobs.length} raw jobs, ${scoredJobs.length} domain-fit jobs, ${skippedAlreadySent} already emailed, ${topJobs.length} top jobs.`);
 
+  // The resume is never tailored per job - generate it once and reuse the
+  // same PDF for every company in this run. Only the cover letter changes.
+  const resumeFile = path.join(runDir, "resume.pdf");
+  await fs.writeFile(resumeFile, await createResumePdf(resume));
+
   const generated = [];
   for (const job of topJobs) {
     const folderName = safeName(`${job.company}-${job.title}`);
@@ -61,12 +66,9 @@ export async function runJobAssistant(options = {}) {
     await fs.mkdir(jobDir, { recursive: true });
 
     const coverLetterLines = buildCoverLetterLines(resume, job);
-    const resumePdf = await createResumePdf(resume, job);
     const coverPdf = await createCoverLetterPdf(coverLetterLines, `${resume.name} - ${job.company} Cover Letter`);
-    const resumeFile = path.join(jobDir, "resume.pdf");
     const coverFile = path.join(jobDir, "cover-letter.pdf");
 
-    await fs.writeFile(resumeFile, resumePdf);
     await fs.writeFile(coverFile, coverPdf);
     await fs.writeFile(path.join(jobDir, "job.json"), JSON.stringify(job, null, 2));
 
@@ -102,7 +104,7 @@ export async function runJobAssistant(options = {}) {
   if (!noEmail) {
     emailStatus = await sendPacketEmail(resume, generated, summary, runDir);
     if (emailStatus === "sent" && !useSamples) {
-      await recordSentCompanies(generated.map((item) => item.job.company));
+      await recordSentCompanies(generated.map((item) => item.job));
     }
   } else {
     console.log("Email skipped because --no-email or SEND_EMAIL=false was used.");

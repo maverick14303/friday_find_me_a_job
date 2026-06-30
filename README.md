@@ -11,9 +11,10 @@ Technical words: Vercel hosts the dashboard and serverless function. cron-job.or
 - Also supports a manual `Run Now` button from the Vercel dashboard.
 - Searches public job pages only.
 - Keeps resumes truthful and based on `data/resume-profile.json` (copy `data/resume-profile.example.json` to create it - it's gitignored since it holds your real name, phone, and email).
-- Generates single-column, selectable-text PDFs.
-- Sends the final packet through Gmail.
+- Generates a single-column, selectable-text resume PDF once from `data/resume-profile.json` (never tailored per job) and reuses it for every company in a run - only the cover letter is written per company.
+- Sends the resume + one cover letter per company through Gmail.
 - Never emails the same company twice - once a company is sent, it's skipped in every future run (see "Never Repeat a Company" below).
+- Reply to the daily email with just a company name to apply to it (see "Reply to Apply" below).
 
 ## Required Secrets
 
@@ -31,12 +32,12 @@ Add these to Vercel environment variables:
 
 `GMAIL_APP_PASSWORD` is still supported as an optional fallback if Google allows it later.
 
-Optional, for the never-repeat-a-company feature:
+Needed for the never-repeat-a-company and reply-to-apply features:
 
 - `SUPABASE_URL`: your Supabase project URL.
 - `SUPABASE_ANON_KEY`: your Supabase publishable/anon key.
 
-If these aren't set, the app still works exactly as before - it just won't remember which companies it already emailed.
+If these aren't set, both features are silently skipped and the app behaves as if they don't exist - it does not block the rest of the run.
 
 ## Gmail Setup With Google Sign-in
 
@@ -56,8 +57,10 @@ Use Google Sign-in instead:
 10. Copy the refresh token shown on the success page into Vercel as `GMAIL_OAUTH_REFRESH_TOKEN`.
 11. Redeploy on Vercel.
 
-Plain words: you approve the app once, then it can send the daily email from the new Gmail account.
-Technical words: OAuth refresh token with the `gmail.send` scope.
+Plain words: you approve the app once, then it can send the daily email from the new Gmail account, and (for "Reply to Apply" below) read replies sent back to it.
+Technical words: OAuth refresh token with the `gmail.send` and `gmail.modify` scopes.
+
+**If you connected Gmail before this version**, your existing refresh token only has `gmail.send` and can't read replies. Repeat steps 8-11 above (you'll see a consent screen asking for the extra permission) to get a token with both scopes, then replace `GMAIL_OAUTH_REFRESH_TOKEN` in Vercel and redeploy.
 
 ## cron-job.org Setup
 
@@ -68,6 +71,12 @@ Create a daily cron job in cron-job.org:
 - Time: `10:00 AM` in your cron-job.org timezone settings.
 
 Keep `YOUR_CRON_SECRET` long and private. Anyone with that URL can trigger the job.
+
+For "Reply to Apply" (below), create a **second** cron job that checks for replies more often:
+
+- URL: `https://YOUR-VERCEL-APP.vercel.app/api/check-replies?secret=YOUR_CRON_SECRET`
+- Method: `GET`
+- Time: every 15 minutes.
 
 ## Run Locally
 
@@ -93,6 +102,21 @@ This needs `SUPABASE_URL` and `SUPABASE_ANON_KEY` set (see "Required Secrets" ab
 
 To reset and allow a company to be sent again, delete its row from `sent_companies` in the Supabase dashboard.
 
+## Reply to Apply
+
+Reply to a daily packet email with just the company name (e.g. "TCS Research"). The next time `/api/check-replies` runs (every 15 minutes via cron-job.org):
+
+1. It looks that company up in `sent_companies` (matches even a partial name).
+2. It regenerates the original resume and that company's exact cover letter.
+3. **If a public recruiter email was found** when the job was scraped, it emails the application directly to that address on your behalf - no further confirmation step. **If not**, this is skipped.
+4. Either way, it replies to you in the same email thread with the apply link and both PDFs attached, so you can submit it yourself if step 3 didn't apply (or as a record if it did).
+
+Important caveats:
+- Recruiter emails come from scraping public job postings - they are **not verified**. An auto-sent application can go to a wrong, stale, or unrelated address. Check the confirmation reply each time to see exactly what happened.
+- This only works for companies recently emailed by this app (it can't apply to arbitrary companies you type in).
+- It does **not** fill out web application forms (Workday, Greenhouse, Lever, career-site portals, etc.) - that would require a different, much less reliable kind of browser automation per company. When no recruiter email exists, you still have to submit through the link yourself.
+- Needs `SUPABASE_URL`/`SUPABASE_ANON_KEY` (to look up the company) and a Gmail refresh token with the `gmail.modify` scope (to read/reply) - see "Gmail Setup" above if you connected before this feature existed.
+
 ## ATS Safety Rules
 
 - No fake experience.
@@ -106,12 +130,15 @@ To reset and allow a company to be sent again, delete its row from `sent_compani
 - `scripts/run-job-assistant.mjs` - orchestrates a run (search -> score -> generate -> email) and the CLI entry point.
 - `scripts/lib/scrape.mjs` - public job source adapters (LinkedIn, Indeed, RemoteOK, Jobicy, Arbeitnow, DuckDuckGo).
 - `scripts/lib/scoring.mjs` - ATS keyword matching and job scoring.
-- `scripts/lib/resume.mjs` - tailored summary, cover letter text, run summary report.
-- `scripts/lib/pdf.mjs` - resume/cover-letter PDF rendering, built on `pdf-lib`.
-- `scripts/lib/email.mjs` - Gmail API / SMTP delivery.
+- `scripts/lib/resume.mjs` - cover letter text, run summary report.
+- `scripts/lib/pdf.mjs` - resume/cover-letter PDF rendering, built on `pdf-lib`. Resume rendering is job-agnostic by design.
+- `scripts/lib/email.mjs` - Gmail API / SMTP delivery, plus shared MIME/OAuth-token helpers reused by the reply flow.
+- `scripts/lib/history.mjs` - Supabase-backed sent-company history (dedup + the data the reply flow looks up).
+- `scripts/lib/gmailInbox.mjs` - reads/replies-to/marks-read inbox messages via the Gmail API.
+- `scripts/lib/applyFlow.mjs` - the "Reply to Apply" orchestration, polled by `/api/check-replies`.
 - `scripts/lib/{util,http,terms}.mjs` - shared helpers, fetch wrappers, and keyword lists.
 - `scripts/security.mjs` - constant-time secret comparison, shared by the `api/` handlers.
-- `api/` - Vercel serverless endpoints (dashboard run trigger, Gmail OAuth start/callback).
+- `api/` - Vercel serverless endpoints (dashboard run trigger, reply checker, Gmail OAuth start/callback).
 
 ## Important Limit
 

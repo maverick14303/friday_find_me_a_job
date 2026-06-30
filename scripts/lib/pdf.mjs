@@ -1,6 +1,4 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { tailoredSummary } from "./resume.mjs";
-import { getMatchedResumeSkills, rankBullets, rankProjects } from "./scoring.mjs";
 import { formatHumanDate } from "./util.mjs";
 
 const PAGE_WIDTH = 612;
@@ -163,12 +161,14 @@ class PdfLayout {
   }
 }
 
-export async function createResumePdf(resume, job) {
+// Renders the resume exactly as written in the profile - no per-job
+// tailoring, ordering, or skill re-ranking. One PDF, reused for every
+// company in a run, so what gets sent always matches the original resume.
+export async function createResumePdf(resume) {
   const doc = await PDFDocument.create();
-  doc.setTitle(`${resume.name} - ${job.title} Resume`);
+  doc.setTitle(`${resume.name} - Resume`);
   const fonts = await embedFonts(doc);
   const pdf = new PdfLayout(doc, fonts);
-  const matchedSkills = getMatchedResumeSkills(resume, job);
 
   pdf.center(resume.name, 18, "bold");
   pdf.center(resume.headline, 10, "regular");
@@ -176,7 +176,7 @@ export async function createResumePdf(resume, job) {
   pdf.gap(7);
 
   pdf.section("Summary");
-  pdf.bullet(tailoredSummary(resume, job), 9);
+  pdf.bullet(resume.summary, 9);
 
   pdf.section("Education");
   for (const item of resume.education) pdf.bullet(item, 9);
@@ -185,18 +185,18 @@ export async function createResumePdf(resume, job) {
   for (const item of resume.experience) {
     pdf.bullet(item.company, 9.2, "bold");
     pdf.indentText(`${item.role} | ${item.dates}`, 9, "italic");
-    for (const bullet of rankBullets(item.bullets, job)) pdf.bullet(bullet, 9);
+    for (const bullet of item.bullets) pdf.bullet(bullet, 9);
   }
 
   pdf.section("Projects");
-  for (const project of rankProjects(resume.projects, job)) {
+  for (const project of resume.projects) {
     pdf.bullet(project.name, 9.2, "bold");
     pdf.indentText(project.tools.join(", "), 9, "italic");
-    for (const bullet of rankBullets(project.bullets, job)) pdf.bullet(bullet, 9);
+    for (const bullet of project.bullets) pdf.bullet(bullet, 9);
   }
 
   pdf.section("Technical Skills");
-  for (const [category, values] of Object.entries(matchedSkills)) {
+  for (const [category, values] of Object.entries(resume.skills)) {
     pdf.bullet(`${category}: ${values.join(", ")}`, 9);
   }
 

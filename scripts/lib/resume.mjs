@@ -1,19 +1,5 @@
 import { unique, normalize } from "./util.mjs";
 
-export function tailoredSummary(resume, job) {
-  const relevant = [];
-  if (job.keywordMatches.includes("python")) relevant.push("Python");
-  if (job.keywordMatches.some((term) => ["machine learning", "ml", "ai", "artificial intelligence"].includes(term))) {
-    relevant.push("machine learning");
-  }
-  if (job.keywordMatches.includes("regression")) relevant.push("regression modeling");
-  if (job.keywordMatches.includes("model evaluation")) relevant.push("model evaluation");
-  if (job.keywordMatches.includes("adversarial ml")) relevant.push("adversarial ML");
-
-  const focus = relevant.length ? ` Relevant focus for this role: ${unique(relevant).join(", ")}.` : "";
-  return `${resume.summary}${focus}`;
-}
-
 export function buildCoverLetterLines(resume, job) {
   const role = job.title || "AI/ML role";
   const company = job.company || "your team";
