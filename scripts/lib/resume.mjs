@@ -53,6 +53,7 @@ export function buildSummary(resume, candidates, generated, diagnostics = {}) {
   lines.push(`Created: ${new Date().toISOString()}`);
   lines.push(`Raw jobs found: ${diagnostics.totalRawJobs ?? "unknown"}`);
   lines.push(`Domain-fit jobs found: ${diagnostics.totalDomainFitJobs ?? "unknown"}`);
+  lines.push(`Already emailed (skipped): ${diagnostics.skippedAlreadySent ?? 0}`);
   lines.push("");
   lines.push("Top Generated Packets");
   if (generated.length === 0) {

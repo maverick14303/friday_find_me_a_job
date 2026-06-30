@@ -17,6 +17,10 @@ export function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+export function companyKey(value) {
+  return normalize(value).replace(/[^a-z0-9]/g, "");
+}
+
 export function safeName(value) {
   return String(value || "file").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 100) || "file";
 }

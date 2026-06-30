@@ -13,6 +13,7 @@ Technical words: Vercel hosts the dashboard and serverless function. cron-job.or
 - Keeps resumes truthful and based on `data/resume-profile.json` (copy `data/resume-profile.example.json` to create it - it's gitignored since it holds your real name, phone, and email).
 - Generates single-column, selectable-text PDFs.
 - Sends the final packet through Gmail.
+- Never emails the same company twice - once a company is sent, it's skipped in every future run (see "Never Repeat a Company" below).
 
 ## Required Secrets
 
@@ -29,6 +30,13 @@ Add these to Vercel environment variables:
 - `GMAIL_OAUTH_REFRESH_TOKEN`: created after you click `Connect Gmail`.
 
 `GMAIL_APP_PASSWORD` is still supported as an optional fallback if Google allows it later.
+
+Optional, for the never-repeat-a-company feature:
+
+- `SUPABASE_URL`: your Supabase project URL.
+- `SUPABASE_ANON_KEY`: your Supabase publishable/anon key.
+
+If these aren't set, the app still works exactly as before - it just won't remember which companies it already emailed.
 
 ## Gmail Setup With Google Sign-in
 
@@ -77,6 +85,14 @@ npm run run:jobs
 
 If Gmail secrets are missing, the app writes an `email-preview.txt` instead of sending.
 
+## Never Repeat a Company
+
+Every company that gets emailed is recorded in a Supabase table (`sent_companies`, keyed by a normalized company name). On each run, before picking the top 5, the app filters out any company already in that table - so the same company is never sent twice, even across days/redeploys/cold starts.
+
+This needs `SUPABASE_URL` and `SUPABASE_ANON_KEY` set (see "Required Secrets" above). Without them, this specific feature is silently skipped and the app behaves as it did before - it does not block the rest of the run.
+
+To reset and allow a company to be sent again, delete its row from `sent_companies` in the Supabase dashboard.
+
 ## ATS Safety Rules
 
 - No fake experience.
@@ -100,3 +116,5 @@ If Gmail secrets are missing, the app writes an `email-preview.txt` instead of s
 ## Important Limit
 
 Free public sources sometimes return job-board listing pages instead of one exact company opening. When that happens, the app still reports the link, but it does not invent company-specific details. The best results come from company career pages and public job pages that expose a clear title, company, and description.
+
+Indeed in particular rate-limits scraping aggressively: firing its 3 search queries at the same time gets all 3 blocked with a 403, even with proper browser headers. The app now runs Indeed queries one at a time with a short delay between them, which fixes the self-inflicted part of this (verified - all 3 succeed when spaced out). Indeed can still block a given IP/session independently of how the app behaves; when that happens it's logged in the run's search diagnostics and the run continues using the other 8 sources (LinkedIn guest search, RemoteOK, Jobicy, Arbeitnow, and DuckDuckGo across 15 queries) without failing.

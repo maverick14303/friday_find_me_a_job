@@ -21,16 +21,16 @@ export async function collectPublicJobs() {
     searchLinkedInGuest("data science intern", "India"),
     searchLinkedInGuest("computer vision intern", "India"),
     searchLinkedInGuest("python ai intern", "India"),
-    searchIndeed("machine learning intern", "India"),
-    searchIndeed("ai ml intern", "India"),
-    searchIndeed("data science intern", "India"),
+    searchIndeedAll(["machine learning intern", "ai ml intern", "data science intern"], "India"),
     searchRemoteOk(),
     searchJobicy(),
     searchArbeitnow()
   ].map(async (promise) => {
     const { jobs: found, report } = await promise;
     jobs.push(...found);
-    if (report) sourceReports.push(report);
+    for (const item of Array.isArray(report) ? report : [report]) {
+      if (item) sourceReports.push(item);
+    }
   });
 
   await Promise.allSettled([...queryRuns, ...directRuns]);
@@ -205,6 +205,25 @@ async function searchIndeed(query, location) {
     console.log(`Indeed search failed for "${query}": ${error.message}`);
     return { jobs: [], report: { source: `indeed: ${query}`, count: 0, error: error.message } };
   }
+}
+
+// Indeed rate-limits aggressively on simultaneous requests from the same
+// origin (verified: 3 parallel requests get 403'd even with browser headers,
+// while the same requests spaced out succeed). Run queries one at a time.
+async function searchIndeedAll(queries, location) {
+  const jobs = [];
+  const reports = [];
+  for (const query of queries) {
+    const { jobs: found, report } = await searchIndeed(query, location);
+    jobs.push(...found);
+    reports.push(report);
+    await sleep(1200);
+  }
+  return { jobs, report: reports };
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function jobFromSearchResult(result, query) {

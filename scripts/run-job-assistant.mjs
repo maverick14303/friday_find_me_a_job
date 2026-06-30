@@ -8,7 +8,8 @@ import { scoreJob } from "./lib/scoring.mjs";
 import { createResumePdf, createCoverLetterPdf } from "./lib/pdf.mjs";
 import { buildCoverLetterLines, buildSummary } from "./lib/resume.mjs";
 import { sendPacketEmail } from "./lib/email.mjs";
-import { safeName, formatDateForPath } from "./lib/util.mjs";
+import { getSentCompanyKeys, recordSentCompanies } from "./lib/history.mjs";
+import { safeName, formatDateForPath, companyKey } from "./lib/util.mjs";
 
 const ROOT = process.cwd();
 const DEFAULT_OUTPUT_DIR = process.env.JOB_ASSISTANT_OUTPUT_DIR ||
@@ -41,12 +42,17 @@ export async function runJobAssistant(options = {}) {
     .sort((a, b) => b.score - a.score || b.keywordMatches.length - a.keywordMatches.length);
 
   const uniqueScoredJobs = dedupeRankedJobs(scoredJobs);
-  const candidates = uniqueScoredJobs.slice(0, 10);
-  const specificJobs = uniqueScoredJobs.filter((job) => !job.isGenericListing && !/company not shown/i.test(job.company || ""));
-  const fallbackJobs = uniqueScoredJobs.filter((job) => !specificJobs.includes(job));
+
+  const sentCompanyKeys = useSamples ? new Set() : await getSentCompanyKeys();
+  const freshJobs = uniqueScoredJobs.filter((job) => !sentCompanyKeys.has(companyKey(job.company)));
+  const skippedAlreadySent = uniqueScoredJobs.length - freshJobs.length;
+
+  const candidates = freshJobs.slice(0, 10);
+  const specificJobs = freshJobs.filter((job) => !job.isGenericListing && !/company not shown/i.test(job.company || ""));
+  const fallbackJobs = freshJobs.filter((job) => !specificJobs.includes(job));
   const topJobs = [...specificJobs, ...fallbackJobs].slice(0, 5);
 
-  console.log(`Found ${uniqueJobs.length} raw jobs, ${scoredJobs.length} domain-fit jobs, ${topJobs.length} top jobs.`);
+  console.log(`Found ${uniqueJobs.length} raw jobs, ${scoredJobs.length} domain-fit jobs, ${skippedAlreadySent} already emailed, ${topJobs.length} top jobs.`);
 
   const generated = [];
   for (const job of topJobs) {
@@ -74,6 +80,7 @@ export async function runJobAssistant(options = {}) {
   const summary = buildSummary(resume, candidates, generated, {
     totalRawJobs: uniqueJobs.length,
     totalDomainFitJobs: scoredJobs.length,
+    skippedAlreadySent,
     sourceReports
   });
   await fs.writeFile(path.join(runDir, "summary.txt"), summary);
@@ -94,6 +101,9 @@ export async function runJobAssistant(options = {}) {
   let emailStatus = "skipped";
   if (!noEmail) {
     emailStatus = await sendPacketEmail(resume, generated, summary, runDir);
+    if (emailStatus === "sent" && !useSamples) {
+      await recordSentCompanies(generated.map((item) => item.job.company));
+    }
   } else {
     console.log("Email skipped because --no-email or SEND_EMAIL=false was used.");
   }

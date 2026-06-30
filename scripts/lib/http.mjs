@@ -8,7 +8,8 @@ export async function fetchText(url) {
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; ATSJobAssistant/1.0; +https://example.com)",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9"
       }
     });
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
