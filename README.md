@@ -1,6 +1,6 @@
 # FRIDAY — Find Me A Job
 
-FRIDAY is a personal job-hunting assistant that runs itself. Every morning it finds AI/ML intern and fresher jobs, ranks them against your real resume, creates ATS-safe resume and cover-letter PDFs, and emails you the top 5 packets. Reply to that email with a company name and FRIDAY applies for you.
+FRIDAY is my personal assistant. It runs a handful of jobs for me, and this repo is one of them — the job finder. Every morning it finds AI/ML intern and fresher jobs, ranks them against your real resume, creates ATS-safe resume and cover-letter PDFs, and emails you the top 5 packets. Reply to that email with a company name and FRIDAY applies for you.
 
 Plain words: Vercel shows the button and does the work, cron-job.org is the alarm clock, and FRIDAY is the assistant tying it together.
 Technical words: Vercel hosts the dashboard and serverless functions. cron-job.org sends the HTTP triggers.
