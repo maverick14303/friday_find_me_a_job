@@ -1,9 +1,9 @@
-# ATS Job Assistant
+# FRIDAY — Find Me A Job
 
-This app finds AI/ML intern and fresher jobs, ranks them against Ankit's real resume, creates ATS-safe resume and cover letter PDFs, and emails the top 5 packets.
+FRIDAY is a personal job-hunting assistant that runs itself. Every morning it finds AI/ML intern and fresher jobs, ranks them against your real resume, creates ATS-safe resume and cover-letter PDFs, and emails you the top 5 packets. Reply to that email with a company name and FRIDAY applies for you.
 
-Plain words: Vercel shows the button and does the work. cron-job.org is the alarm clock.
-Technical words: Vercel hosts the dashboard and serverless function. cron-job.org sends an HTTP trigger.
+Plain words: Vercel shows the button and does the work, cron-job.org is the alarm clock, and FRIDAY is the assistant tying it together.
+Technical words: Vercel hosts the dashboard and serverless functions. cron-job.org sends the HTTP triggers.
 
 ## What It Does
 
