@@ -34,7 +34,7 @@ function naturalSkillList(keywordMatches = []) {
 
 export function buildSummary(resume, candidates, generated, diagnostics = {}) {
   const lines = [];
-  lines.push(`FRIDAY - Find Me A Job - Daily Run`);
+  lines.push(`SUNDAY - Find Me A Job - Daily Run`);
   lines.push(`Candidate: ${resume.name}`);
   lines.push(`Created: ${new Date().toISOString()}`);
   lines.push(`Raw jobs found: ${diagnostics.totalRawJobs ?? "unknown"}`);

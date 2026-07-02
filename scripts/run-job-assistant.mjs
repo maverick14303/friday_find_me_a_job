@@ -13,7 +13,7 @@ import { safeName, formatDateForPath, companyKey } from "./lib/util.mjs";
 
 const ROOT = process.cwd();
 const DEFAULT_OUTPUT_DIR = process.env.JOB_ASSISTANT_OUTPUT_DIR ||
-  (process.env.VERCEL ? path.join(os.tmpdir(), "friday-find-me-a-job-output") : path.join(ROOT, "output"));
+  (process.env.VERCEL ? path.join(os.tmpdir(), "sunday-find-me-a-job-output") : path.join(ROOT, "output"));
 const RESUME_PATH = path.join(ROOT, "data", "resume-profile.json");
 const SAMPLE_JOBS_PATH = path.join(ROOT, "data", "sample-jobs.json");
 

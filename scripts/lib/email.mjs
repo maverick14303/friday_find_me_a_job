@@ -181,7 +181,7 @@ async function sendSmtpMail({ user, password, to, subject, text, attachments }) 
 
   let greeting = await readResponse();
   if (!greeting.startsWith("220")) throw new Error(`SMTP greeting failed: ${greeting}`);
-  await send("EHLO friday-find-me-a-job", 250);
+  await send("EHLO sunday-find-me-a-job", 250);
   await send(`AUTH PLAIN ${Buffer.from(`\0${user}\0${password}`).toString("base64")}`, 235);
   await send(`MAIL FROM:<${user}>`, 250);
   await send(`RCPT TO:<${to}>`, 250);
