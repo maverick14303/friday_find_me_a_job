@@ -1,4 +1,4 @@
-# SUNDAY — Find Me A Job
+# SUNDAY - Find Me A Job
 
 > **Sunday is my Friday.**
 
