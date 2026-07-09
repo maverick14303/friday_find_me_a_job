@@ -1,15 +1,11 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { listUnreadInboxMessages, markAsRead } from "./gmailInbox.mjs";
 import { findRecentJobByReplyText, markApplied } from "./history.mjs";
 import { buildCoverLetterLines } from "./resume.mjs";
 import { createResumePdf, createCoverLetterPdf } from "./pdf.mjs";
 import { getGmailAccessToken, buildMimeMessage, sendGmailApiRaw } from "./email.mjs";
 import { findRecruiterEmail } from "./recruiterLookup.mjs";
+import { loadResumeProfile } from "./loadResume.mjs";
 import { companyKey, safeName } from "./util.mjs";
-
-const RESUME_PATH = path.join(process.cwd(), "data", "resume-profile.json");
 
 // Polled by /api/check-replies. The user replies to a daily packet email
 // with just a company name; this looks that company up in the sent-company
@@ -155,5 +151,5 @@ function parseEmailAddress(fromHeader) {
 }
 
 async function loadResume() {
-  return JSON.parse(await fs.readFile(RESUME_PATH, "utf8"));
+  return loadResumeProfile();
 }

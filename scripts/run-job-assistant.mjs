@@ -9,12 +9,12 @@ import { createResumePdf, createCoverLetterPdf } from "./lib/pdf.mjs";
 import { buildCoverLetterLines, buildSummary } from "./lib/resume.mjs";
 import { sendPacketEmail } from "./lib/email.mjs";
 import { getSentCompanyKeys, recordSentCompanies } from "./lib/history.mjs";
+import { loadResumeProfile } from "./lib/loadResume.mjs";
 import { safeName, formatDateForPath, companyKey } from "./lib/util.mjs";
 
 const ROOT = process.cwd();
 const DEFAULT_OUTPUT_DIR = process.env.JOB_ASSISTANT_OUTPUT_DIR ||
   (process.env.VERCEL ? path.join(os.tmpdir(), "sunday-find-me-a-job-output") : path.join(ROOT, "output"));
-const RESUME_PATH = path.join(ROOT, "data", "resume-profile.json");
 const SAMPLE_JOBS_PATH = path.join(ROOT, "data", "sample-jobs.json");
 
 export async function runJobAssistant(options = {}) {
@@ -23,7 +23,7 @@ export async function runJobAssistant(options = {}) {
   const outputDir = options.outputDir || DEFAULT_OUTPUT_DIR;
 
   await fs.mkdir(outputDir, { recursive: true });
-  const resume = JSON.parse(await fs.readFile(RESUME_PATH, "utf8"));
+  const resume = await loadResumeProfile();
   const runId = formatDateForPath(new Date());
   const runDir = path.join(outputDir, runId);
   await fs.mkdir(runDir, { recursive: true });
