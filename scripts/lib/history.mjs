@@ -13,13 +13,29 @@ function headers() {
   };
 }
 
+// Supabase history is best-effort and must never block the run. If the project
+// is paused, slow, or unreachable, a bare fetch could hang - and getSentCompanyKeys
+// is awaited before any email is sent, inside a 60s-capped serverless function.
+// This timeout guarantees the call fails fast so the caller's catch can fall back.
+const SUPABASE_TIMEOUT_MS = 8000;
+
+async function supabaseFetch(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SUPABASE_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 // Companies already emailed in a previous run, so the same company is never
 // re-sent. Falls back to "no history" (nothing filtered) if Supabase isn't
 // configured, so the assistant still works without this feature set up.
 export async function getSentCompanyKeys() {
   if (!isConfigured()) return new Set();
   try {
-    const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/sent_companies?select=company_key`, {
+    const response = await supabaseFetch(`${process.env.SUPABASE_URL}/rest/v1/sent_companies?select=company_key`, {
       headers: headers()
     });
     if (!response.ok) {
@@ -51,7 +67,7 @@ export async function recordSentCompanies(jobs) {
   }));
 
   try {
-    const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/sent_companies?on_conflict=company_key`, {
+    const response = await supabaseFetch(`${process.env.SUPABASE_URL}/rest/v1/sent_companies?on_conflict=company_key`, {
       method: "POST",
       headers: { ...headers(), Prefer: "resolution=merge-duplicates" },
       body: JSON.stringify(rows)
@@ -73,7 +89,7 @@ export async function findRecentJobByReplyText(replyText) {
   if (!needle) return null;
 
   try {
-    const response = await fetch(
+    const response = await supabaseFetch(
       `${process.env.SUPABASE_URL}/rest/v1/sent_companies?select=*&order=last_sent_at.desc&limit=200`,
       { headers: headers() }
     );
@@ -92,7 +108,7 @@ export async function findRecentJobByReplyText(replyText) {
 export async function markApplied(companyKeyValue, appliedEmail) {
   if (!isConfigured()) return;
   try {
-    const response = await fetch(
+    const response = await supabaseFetch(
       `${process.env.SUPABASE_URL}/rest/v1/sent_companies?company_key=eq.${encodeURIComponent(companyKeyValue)}`,
       {
         method: "PATCH",
