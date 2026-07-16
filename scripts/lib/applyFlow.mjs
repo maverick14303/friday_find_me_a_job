@@ -2,7 +2,7 @@ import { listUnreadInboxMessages, markAsRead } from "./gmailInbox.mjs";
 import { findRecentJobByReplyText, markApplied } from "./history.mjs";
 import { buildCoverLetterLines } from "./resume.mjs";
 import { createResumePdf, createCoverLetterPdf } from "./pdf.mjs";
-import { getGmailAccessToken, buildMimeMessage, sendGmailApiRaw } from "./email.mjs";
+import { sendMail } from "./email.mjs";
 import { findRecruiterEmail } from "./recruiterLookup.mjs";
 import { loadResumeProfile } from "./loadResume.mjs";
 import { companyKey, safeName } from "./util.mjs";
@@ -69,7 +69,6 @@ export async function processInboxReplies() {
 
       if (recruiterEmail && !alreadyApplied) {
         await sendApplicationEmail({
-          user,
           to: recruiterEmail,
           resume,
           job,
@@ -108,10 +107,8 @@ export async function processInboxReplies() {
   return { processed: results.length, results };
 }
 
-async function sendApplicationEmail({ user, to, resume, job, coverLetterLines, resumePdf, coverPdf }) {
-  const accessToken = await getGmailAccessToken();
-  const raw = buildMimeMessage({
-    from: user,
+async function sendApplicationEmail({ to, resume, job, coverLetterLines, resumePdf, coverPdf }) {
+  await sendMail({
     to,
     subject: `Application for ${job.job_title} - ${resume.name}`,
     text: coverLetterLines.join("\n"),
@@ -120,15 +117,14 @@ async function sendApplicationEmail({ user, to, resume, job, coverLetterLines, r
       { filename: `${safeName(job.company_name)}-cover-letter.pdf`, contentType: "application/pdf", content: coverPdf }
     ]
   });
-  await sendGmailApiRaw({ accessToken, raw });
 }
 
+// Reply in the same thread. SMTP has no thread id, so threading is done purely
+// with the In-Reply-To / References headers pointing at the user's message.
 async function replyToUser(message, user, { subject, text, attachments }) {
-  const accessToken = await getGmailAccessToken();
   const to = parseEmailAddress(message.from);
   const references = [message.references, message.messageIdHeader].filter(Boolean).join(" ");
-  const raw = buildMimeMessage({
-    from: user,
+  await sendMail({
     to,
     subject,
     text,
@@ -138,7 +134,6 @@ async function replyToUser(message, user, { subject, text, attachments }) {
       references ? `References: ${references}` : ""
     ].filter(Boolean)
   });
-  await sendGmailApiRaw({ accessToken, raw, threadId: message.threadId });
 }
 
 function replySubject(originalSubject) {

@@ -8,8 +8,9 @@ import { scoreJob } from "./lib/scoring.mjs";
 import { createResumePdf, createCoverLetterPdf } from "./lib/pdf.mjs";
 import { buildCoverLetterLines, buildSummary } from "./lib/resume.mjs";
 import { sendPacketEmail } from "./lib/email.mjs";
-import { getSentCompanyKeys, recordSentCompanies } from "./lib/history.mjs";
+import { getSentCompanyKeys, recordSentCompanies, recordRunStatus } from "./lib/history.mjs";
 import { loadResumeProfile } from "./lib/loadResume.mjs";
+import { assertRunnable } from "./lib/config.mjs";
 import { safeName, formatDateForPath, companyKey } from "./lib/util.mjs";
 
 const ROOT = process.cwd();
@@ -22,6 +23,31 @@ export async function runJobAssistant(options = {}) {
   const noEmail = options.noEmail ?? process.env.SEND_EMAIL === "false";
   const outputDir = options.outputDir || DEFAULT_OUTPUT_DIR;
 
+  // Fail fast with a clear message if the config needed to actually email is
+  // missing. Skipped for dry runs (--no-email) so local sample runs still work.
+  if (!noEmail) assertRunnable();
+
+  try {
+    const result = await execute({ useSamples, noEmail, outputDir });
+    if (!useSamples) {
+      await recordRunStatus({
+        status: result.emailStatus === "sent" ? "ok" : (result.topJobs.length === 0 ? "no_jobs" : "generated"),
+        rawJobs: result.totalRawJobs,
+        domainFitJobs: result.totalDomainFitJobs,
+        emailed: result.topJobs.length,
+        emailStatus: result.emailStatus
+      });
+    }
+    return result;
+  } catch (error) {
+    if (!useSamples) {
+      await recordRunStatus({ status: "failed", error: error.message });
+    }
+    throw error;
+  }
+}
+
+async function execute({ useSamples, noEmail, outputDir }) {
   await fs.mkdir(outputDir, { recursive: true });
   const resume = await loadResumeProfile();
   const runId = formatDateForPath(new Date());
@@ -72,11 +98,7 @@ export async function runJobAssistant(options = {}) {
     await fs.writeFile(coverFile, coverPdf);
     await fs.writeFile(path.join(jobDir, "job.json"), JSON.stringify(job, null, 2));
 
-    generated.push({
-      job,
-      resumeFile,
-      coverFile
-    });
+    generated.push({ job, resumeFile, coverFile });
   }
 
   const summary = buildSummary(resume, candidates, generated, {

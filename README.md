@@ -19,75 +19,62 @@ Under the hood: Vercel hosts the dashboard and the serverless functions, and cro
 - Reply to the daily email with just a company name to apply to it (see "Reply to Apply" below).
 - Optionally finds a recruiter email via Hunter.io (free tier) or Apollo/Lusha when a posting doesn't list one, only at reply-to-apply time (see "Recruiter Email Enrichment" below).
 
-## Required Secrets
+## Configuration
 
-Add these to Vercel environment variables:
+Set these in Vercel environment variables. There are far fewer than there used to be - one secret, one Gmail app password, and that's the core of it.
 
-- `GMAIL_USER`: the new sender Gmail address.
-- `TO_EMAIL`: `your-personal-email@gmail.com`.
-- `RUN_NOW_SECRET`: the password you type in the dashboard.
-- `CRON_SECRET`: the secret in the cron-job.org URL.
-- `GMAIL_OAUTH_CLIENT_ID`: Google OAuth client ID.
-- `GMAIL_OAUTH_CLIENT_SECRET`: Google OAuth client secret.
-- `GMAIL_OAUTH_REDIRECT_URI`: `https://YOUR-VERCEL-APP.vercel.app/api/gmail-callback`.
-- `GMAIL_OAUTH_STATE`: a long random password for the Gmail connection flow. **Required** and must be different from `RUN_NOW_SECRET`/`CRON_SECRET` - `/api/gmail-start` and `/api/gmail-callback` now refuse to run without it, since reusing a run secret as the OAuth CSRF token would mix two unrelated trust boundaries.
-- `GMAIL_OAUTH_REFRESH_TOKEN`: created after you click `Connect Gmail`.
+**Required:**
 
-`GMAIL_APP_PASSWORD` is still supported as an optional fallback if Google allows it later.
+- `APP_SECRET`: one long random password. Protects the run, reply-check, and health endpoints (dashboard field + `?secret=` in your cron URLs).
+- `GMAIL_USER`: the sender Gmail address.
+- `GMAIL_APP_PASSWORD`: a Gmail App Password (see "Gmail Setup" below). One password does both sending (SMTP) and reading your replies (IMAP).
+- `TO_EMAIL`: where the daily packet is sent (your personal email).
+- `RESUME_PROFILE_JSON`: your `resume-profile.json` as a single line. Keeps your personal data out of the repo and out of the deployed bundle. (Locally you can instead just create `data/resume-profile.json`.)
 
-Needed for the never-repeat-a-company and reply-to-apply features:
+**For never-repeat-a-company, reply-to-apply, and run history** (skipped silently if unset - the daily email still works):
 
-- `SUPABASE_URL`: your Supabase project URL.
-- `SUPABASE_ANON_KEY`: your Supabase publishable/anon key.
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 
-If these aren't set, both features are silently skipped and the app behaves as if they don't exist - it does not block the rest of the run.
+**Optional recruiter-email enrichment** (reply-to-apply only), tried in order Hunter -> Apollo -> Lusha:
 
-Optional, to find recruiter emails when a job posting doesn't list one (used only at reply-to-apply time):
+- `HUNTER_API_KEY` (free tier), `APOLLO_API_KEY`, `LUSHA_API_KEY` (both effectively paid). See "Recruiter Email Enrichment" below.
 
-- `HUNTER_API_KEY`: your Hunter.io API key. **Has a real free tier** (50 lookups/month, no card).
-- `APOLLO_API_KEY`: your Apollo.io API key. API access is effectively paid-only.
-- `LUSHA_API_KEY`: your Lusha API key. API access is a paid add-on.
+> Migration note: the old `RUN_NOW_SECRET` / `CRON_SECRET` are still accepted as fallbacks so existing cron URLs don't break mid-switch. Once `APP_SECRET` is set and your cron URLs use it, delete those two. The old Gmail OAuth vars (`GMAIL_OAUTH_*`) are no longer used at all - delete them.
 
-Providers are tried in order: Hunter, then Apollo, then Lusha (whichever keys are set). If none are set, enrichment is skipped and the reply just sends you the apply link. See "Recruiter Email Enrichment" below.
+## Gmail Setup (App Password)
 
-## Gmail Setup With Google Sign-in
+Use a dedicated Gmail account as the sender. One App Password gives the app SMTP (send) and IMAP (read your replies) access - no OAuth, no tokens that expire every week.
 
-Do not use the normal Gmail password. Google usually blocks normal-password SMTP anyway, and it is not a good secret to put into an app.
+1. Create (or pick) a Gmail account just for sending these packets.
+2. Turn on **2-Step Verification**: Google Account -> Security -> 2-Step Verification. (App Passwords don't exist without it - that's a Google requirement.)
+3. Go to Google Account -> Security -> **App passwords**, create one (name it "sunday"), and copy the 16-character password.
+4. In Vercel, set `GMAIL_USER` (the account) and `GMAIL_APP_PASSWORD` (the 16 chars, spaces are fine - they're stripped).
+5. Redeploy.
 
-Use Google Sign-in instead:
+That's it - there's nothing to re-approve or refresh later. If you rotate/remove the App Password in Google, just set a new one in Vercel.
 
-1. Create a new Gmail account just for sending these job packets.
-2. Go to Google Cloud Console and create/select a project.
-3. Enable the Gmail API for that project.
-4. Configure the OAuth consent screen. If it asks for users, add the new Gmail account as a test user.
-5. Create an OAuth Client ID for a Web Application.
-6. Add this authorized redirect URI: `https://YOUR-VERCEL-APP.vercel.app/api/gmail-callback`.
-7. Put the client ID, client secret, redirect URI, and state value into Vercel environment variables.
-8. Open `https://YOUR-VERCEL-APP.vercel.app/api/gmail-start`.
-9. Sign in with the new Gmail account and approve the Gmail send permission.
-10. Copy the refresh token shown on the success page into Vercel as `GMAIL_OAUTH_REFRESH_TOKEN`.
-11. Redeploy on Vercel.
-
-Plain words: you approve the app once, then it can send the daily email from the new Gmail account, and (for "Reply to Apply" below) read replies sent back to it.
-Technical words: OAuth refresh token with the `gmail.send` and `gmail.modify` scopes.
-
-**If you connected Gmail before this version**, your existing refresh token only has `gmail.send` and can't read replies. Repeat steps 8-11 above (you'll see a consent screen asking for the extra permission) to get a token with both scopes, then replace `GMAIL_OAUTH_REFRESH_TOKEN` in Vercel and redeploy.
+Plain words: one password lets the assistant send from this account and read the replies you send back.
+Technical words: Gmail SMTP (`smtp.gmail.com:465`) + IMAP (`imap.gmail.com:993`), authenticated with the App Password.
 
 ## cron-job.org Setup
 
 Create a daily cron job in cron-job.org:
 
-- URL: `https://YOUR-VERCEL-APP.vercel.app/api/run-now?secret=YOUR_CRON_SECRET`
+- URL: `https://YOUR-VERCEL-APP.vercel.app/api/run-now?secret=YOUR_APP_SECRET`
 - Method: `GET`
 - Time: `10:00 AM` in your cron-job.org timezone settings.
 
-Keep `YOUR_CRON_SECRET` long and private. Anyone with that URL can trigger the job.
+Keep `YOUR_APP_SECRET` long and private. Anyone with that URL can trigger the job.
 
 For "Reply to Apply" (below), create a **second** cron job that checks for replies more often:
 
-- URL: `https://YOUR-VERCEL-APP.vercel.app/api/check-replies?secret=YOUR_CRON_SECRET`
+- URL: `https://YOUR-VERCEL-APP.vercel.app/api/check-replies?secret=YOUR_APP_SECRET`
 - Method: `GET`
 - Time: every 15 minutes.
+
+## Health Check
+
+Open `https://YOUR-VERCEL-APP.vercel.app/api/health?secret=YOUR_APP_SECRET` (or click **Check Status** on the dashboard) any time to see, without triggering a run: whether required config is present, whether Gmail and Supabase are reachable, and when the last run happened and how it went. Returns HTTP 200 when healthy, 503 when something needs attention.
 
 ## Run Locally
 
@@ -126,7 +113,7 @@ Important caveats:
 - Recruiter emails are **not verified** - whether scraped from a posting or returned by Apollo/Lusha, an auto-sent application can go to a wrong, stale, or unrelated address. Check the confirmation reply each time to see exactly what happened and which source the address came from.
 - This only works for companies recently emailed by this app (it can't apply to arbitrary companies you type in).
 - It does **not** fill out web application forms (Workday, Greenhouse, Lever, career-site portals, etc.) - that would require a different, much less reliable kind of browser automation per company. When no recruiter email exists, you still have to submit through the link yourself.
-- Needs `SUPABASE_URL`/`SUPABASE_ANON_KEY` (to look up the company) and a Gmail refresh token with the `gmail.modify` scope (to read/reply) - see "Gmail Setup" above if you connected before this feature existed.
+- Needs `SUPABASE_URL`/`SUPABASE_ANON_KEY` (to look up the company) and the Gmail App Password (its IMAP access is what reads your reply) - see "Gmail Setup" above.
 
 ## Recruiter Email Enrichment
 
@@ -158,19 +145,21 @@ Notes:
 
 ## Project Structure
 
-- `scripts/run-job-assistant.mjs` - orchestrates a run (search -> score -> generate -> email) and the CLI entry point.
+- `scripts/run-job-assistant.mjs` - orchestrates a run (validate config -> search -> score -> generate -> email -> record status) and the CLI entry point.
 - `scripts/lib/scrape.mjs` - public job source adapters (LinkedIn, Indeed, RemoteOK, Jobicy, Arbeitnow, DuckDuckGo).
 - `scripts/lib/scoring.mjs` - ATS keyword matching and job scoring.
 - `scripts/lib/resume.mjs` - cover letter text, run summary report.
 - `scripts/lib/pdf.mjs` - resume/cover-letter PDF rendering, built on `pdf-lib`. Resume rendering is job-agnostic by design.
-- `scripts/lib/email.mjs` - Gmail API / SMTP delivery, plus shared MIME/OAuth-token helpers reused by the reply flow.
-- `scripts/lib/history.mjs` - Supabase-backed sent-company history (dedup + the data the reply flow looks up).
-- `scripts/lib/gmailInbox.mjs` - reads/replies-to/marks-read inbox messages via the Gmail API.
-- `scripts/lib/recruiterLookup.mjs` - Apollo/Lusha recruiter-email enrichment, used as a reply-time fallback.
+- `scripts/lib/email.mjs` - Gmail SMTP delivery (send with retry/backoff) + MIME builder, shared by the daily packet and the reply flow.
+- `scripts/lib/gmailInbox.mjs` - reads/marks-read inbox replies over IMAP (`imapflow` + `mailparser`).
+- `scripts/lib/history.mjs` - Supabase-backed sent-company history, reply-lookup data, and run-status records (all timeout-guarded and best-effort).
+- `scripts/lib/config.mjs` - env-var spec + validation, used at run start and by `/api/health`.
+- `scripts/lib/loadResume.mjs` - loads the resume from `RESUME_PROFILE_JSON` (prod) or the local file (dev).
+- `scripts/lib/recruiterLookup.mjs` - Hunter/Apollo/Lusha recruiter-email enrichment, used as a reply-time fallback.
 - `scripts/lib/applyFlow.mjs` - the "Reply to Apply" orchestration, polled by `/api/check-replies`.
 - `scripts/lib/{util,http,terms}.mjs` - shared helpers, fetch wrappers, and keyword lists.
-- `scripts/security.mjs` - constant-time secret comparison, shared by the `api/` handlers.
-- `api/` - Vercel serverless endpoints (dashboard run trigger, reply checker, Gmail OAuth start/callback).
+- `scripts/security.mjs` - constant-time secret comparison + the shared endpoint auth gate.
+- `api/` - Vercel serverless endpoints: `run-now` (daily/dashboard), `check-replies` (reply-to-apply), `health` (status).
 
 ## Important Limit
 

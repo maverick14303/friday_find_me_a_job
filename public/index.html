@@ -201,7 +201,7 @@
             <input id="secret" type="password" autocomplete="current-password" placeholder="Enter your dashboard secret" />
           </div>
           <div class="actions">
-            <a class="secondary" href="/api/gmail-start">Connect Gmail</a>
+            <button id="statusButton" class="secondary" type="button">Check Status</button>
             <button id="runButton" type="button">Run Now</button>
           </div>
         </div>
@@ -209,6 +209,7 @@
 
       <section class="panel">
         <div id="status" class="status">Ready. Schedule this Vercel endpoint in cron-job.org for 10:00 AM IST, or click Run Now anytime.</div>
+        <div id="health" class="status" style="margin-top:12px; display:none; white-space:pre-line;"></div>
       </section>
 
       <section class="panel">
@@ -248,7 +249,9 @@
 
     <script>
       const button = document.querySelector("#runButton");
+      const statusButton = document.querySelector("#statusButton");
       const statusBox = document.querySelector("#status");
+      const healthBox = document.querySelector("#health");
       const secretInput = document.querySelector("#secret");
 
       secretInput.value = localStorage.getItem("jobAssistantSecret") || "";
@@ -257,6 +260,52 @@
         statusBox.textContent = text;
         statusBox.className = "status" + (kind ? " " + kind : "");
       }
+
+      function tick(ok) {
+        return ok ? "✅" : "❌";
+      }
+
+      function renderHealth(data) {
+        const lastRun = data.lastRun
+          ? `last run ${new Date(data.lastRun.ran_at).toLocaleString()} - ${data.lastRun.status}` +
+            (data.lastRun.email_status ? ` (email: ${data.lastRun.email_status})` : "") +
+            (data.lastRun.error ? ` - ${data.lastRun.error}` : "")
+          : "no runs recorded yet";
+        const warnings = (data.config.warnings || []).length
+          ? "\nNotes: " + data.config.warnings.join(" ")
+          : "";
+        healthBox.style.display = "block";
+        healthBox.className = "status " + (data.ok ? "ok" : "bad");
+        healthBox.textContent =
+          `${tick(data.ok)} Overall: ${data.ok ? "healthy" : "needs attention"}\n` +
+          `${tick(data.gmail.ok)} Gmail (send + replies)${data.gmail.ok ? "" : " - " + (data.gmail.error || "unreachable")}\n` +
+          `${tick(data.supabase.ok)} Supabase (history)${data.supabase.ok ? "" : " - " + (data.supabase.error || "unreachable")}\n` +
+          `${tick(data.config.ok)} Required config present\n` +
+          `🕒 ${lastRun}` + warnings;
+      }
+
+      async function checkStatus() {
+        const secret = secretInput.value.trim();
+        localStorage.setItem("jobAssistantSecret", secret);
+        statusButton.disabled = true;
+        healthBox.style.display = "block";
+        healthBox.className = "status";
+        healthBox.textContent = "Checking status...";
+        try {
+          const response = await fetch("/api/health?secret=" + encodeURIComponent(secret));
+          const data = await response.json();
+          if (response.status === 401) throw new Error(data.error || "Wrong secret.");
+          renderHealth(data);
+        } catch (error) {
+          healthBox.className = "status bad";
+          healthBox.textContent = "Status check failed: " + error.message;
+        } finally {
+          statusButton.disabled = false;
+        }
+      }
+
+      statusButton.addEventListener("click", checkStatus);
+      if (secretInput.value.trim()) checkStatus();
 
       button.addEventListener("click", async () => {
         const secret = secretInput.value.trim();

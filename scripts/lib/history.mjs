@@ -123,3 +123,61 @@ export async function markApplied(companyKeyValue, appliedEmail) {
     console.log(`Could not mark company as applied: ${error.message}`);
   }
 }
+
+// Records the outcome of a run so the dashboard and /api/health can show
+// "last run: <when>, <status>" at a glance. Best-effort like the rest of the
+// history layer - a failure here never affects the run itself.
+export async function recordRunStatus(status) {
+  if (!isConfigured()) return;
+  try {
+    const response = await supabaseFetch(`${process.env.SUPABASE_URL}/rest/v1/run_status`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        status: status.status,
+        raw_jobs: status.rawJobs ?? null,
+        domain_fit_jobs: status.domainFitJobs ?? null,
+        emailed: status.emailed ?? null,
+        email_status: status.emailStatus ?? null,
+        error: status.error ? String(status.error).slice(0, 500) : null
+      })
+    });
+    if (!response.ok) {
+      console.log(`Could not record run status: ${response.status} ${await response.text()}`);
+    }
+  } catch (error) {
+    console.log(`Could not record run status: ${error.message}`);
+  }
+}
+
+export async function getLastRunStatus() {
+  if (!isConfigured()) return null;
+  try {
+    const response = await supabaseFetch(
+      `${process.env.SUPABASE_URL}/rest/v1/run_status?select=*&order=ran_at.desc&limit=1`,
+      { headers: headers() }
+    );
+    if (!response.ok) return null;
+    const rows = await response.json();
+    return rows[0] || null;
+  } catch (error) {
+    console.log(`Could not load last run status: ${error.message}`);
+    return null;
+  }
+}
+
+// Quick reachability probe for /api/health - confirms the Supabase REST
+// endpoint answers with the configured key.
+export async function verifySupabase() {
+  if (!isConfigured()) return { ok: false, error: "SUPABASE_URL / SUPABASE_ANON_KEY not set" };
+  try {
+    const response = await supabaseFetch(
+      `${process.env.SUPABASE_URL}/rest/v1/run_status?select=id&limit=1`,
+      { headers: headers() }
+    );
+    if (!response.ok) return { ok: false, error: `${response.status} ${await response.text()}` };
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
