@@ -4,315 +4,628 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SUNDAY — Find Me A Job</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F0A202'/%3E%3Ctext x='16' y='23' font-family='Arial Black' font-size='20' font-weight='900' text-anchor='middle' fill='%2316203A'%3ES%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
     <style>
       :root {
-        --ink: #172026;
-        --muted: #5d6872;
-        --line: #d9e0e6;
-        --paper: #f7f8f5;
-        --surface: #ffffff;
-        --accent: #0f766e;
-        --accent-dark: #0b5f59;
-        --warn: #a16207;
+        --desk: #e9e5da;
+        --paper: #fbfaf5;
+        --paper-2: #f2efe6;
+        --ink: #16203a;
+        --ink-soft: #4d5670;
+        --ink-faint: rgba(22, 32, 58, 0.35);
+        --ultra: #2338c2;
+        --marigold: #f0a202;
+        --stamp-green: #1b7a45;
+        --stamp-red: #c3303c;
+        --display: "Archivo", "Arial Black", sans-serif;
+        --mono: "IBM Plex Mono", "Courier New", monospace;
+        --sans: "IBM Plex Sans", Arial, sans-serif;
       }
 
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
+
+      html { background: var(--desk); }
 
       body {
         margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
+        font-family: var(--sans);
         color: var(--ink);
+        background:
+          radial-gradient(circle at 18% 12%, rgba(240, 162, 2, 0.07), transparent 42%),
+          var(--desk);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ── The waybill document ─────────────────────────────── */
+      .waybill {
+        width: min(920px, calc(100% - 28px));
+        margin: 44px auto 56px;
         background: var(--paper);
+        border: 3px solid var(--ink);
+        box-shadow: 10px 10px 0 rgba(22, 32, 58, 0.14);
       }
 
-      main {
-        width: min(980px, calc(100% - 32px));
-        margin: 0 auto;
-        padding: 40px 0;
+      /* Airmail edge — ultramarine + marigold, the service's own livery */
+      .airmail {
+        height: 12px;
+        border-bottom: 3px solid var(--ink);
+        background: repeating-linear-gradient(
+          -45deg,
+          var(--ultra) 0 16px,
+          var(--paper) 16px 26px,
+          var(--marigold) 26px 42px,
+          var(--paper) 42px 52px
+        );
       }
 
-      header {
+      /* ── Masthead ─────────────────────────────────────────── */
+      .masthead {
         display: flex;
-        align-items: flex-start;
         justify-content: space-between;
-        gap: 24px;
-        margin-bottom: 28px;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 30px 34px 24px;
+        border-bottom: 3px solid var(--ink);
+      }
+
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--ultra);
+        margin: 0 0 10px;
       }
 
       h1 {
-        margin: 0 0 8px;
-        font-size: 34px;
-        line-height: 1.15;
-      }
-
-      p {
-        margin: 0;
-        color: var(--muted);
-        line-height: 1.55;
-      }
-
-      .panel {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 22px;
-        margin-bottom: 18px;
-      }
-
-      label {
-        display: block;
-        font-size: 14px;
-        font-weight: 700;
-        margin-bottom: 8px;
-      }
-
-      input {
-        width: 100%;
-        min-height: 44px;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        padding: 10px 12px;
-        font-size: 16px;
-      }
-
-      button {
-        min-height: 44px;
-        border: 0;
-        border-radius: 6px;
-        padding: 0 18px;
-        background: var(--accent);
-        color: #fff;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      button:hover {
-        background: var(--accent-dark);
-      }
-
-      button:disabled {
-        opacity: 0.6;
-        cursor: wait;
-      }
-
-      .secondary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 44px;
-        border-radius: 6px;
-        padding: 0 18px;
-        background: #e9f5f3;
-        color: var(--accent-dark);
-        font-size: 15px;
-        font-weight: 700;
-        text-decoration: none;
-      }
-
-      .row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        align-items: end;
-      }
-
-      .actions {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-      }
-
-      .status {
-        min-height: 48px;
-        border-left: 4px solid var(--line);
-        padding: 10px 12px;
-        color: var(--muted);
-        background: #fbfcfd;
-      }
-
-      .status.ok {
-        border-color: var(--accent);
-        color: var(--ink);
-      }
-
-      .status.bad {
-        border-color: var(--warn);
-        color: var(--ink);
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-
-      th,
-      td {
-        text-align: left;
-        border-bottom: 1px solid var(--line);
-        padding: 12px 8px;
-        vertical-align: top;
-      }
-
-      th {
-        color: var(--muted);
-        font-size: 12px;
+        font-family: var(--display);
+        font-variation-settings: "wdth" 125;
+        font-weight: 900;
+        font-size: clamp(44px, 8.5vw, 76px);
+        line-height: 0.92;
+        letter-spacing: -0.015em;
         text-transform: uppercase;
+        margin: 0 0 12px;
       }
 
-      @media (max-width: 720px) {
-        header,
-        .row {
-          display: block;
-        }
+      .tagline {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--ink-soft);
+        margin: 0 0 10px;
+      }
 
-        button {
-          width: 100%;
-          margin-top: 12px;
-        }
+      .lede {
+        max-width: 46ch;
+        font-size: 14.5px;
+        color: var(--ink-soft);
+        margin: 0;
+      }
 
-        .actions {
-          display: block;
-        }
+      /* ── Postmark stamp (signature) ──────────────────────── */
+      .stamp-slot {
+        flex: 0 0 auto;
+        width: 158px;
+        height: 158px;
+        margin-top: 4px;
+      }
 
-        .secondary {
-          width: 100%;
-          margin-top: 12px;
+      .postmark {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-7deg);
+        color: var(--ink-faint);
+      }
+
+      .postmark .ring { fill: none; stroke: currentColor; }
+      .postmark .outer { stroke-width: 3.5; }
+      .postmark .inner { stroke-width: 1.8; }
+      .postmark.idle .outer { stroke-dasharray: 7 6; }
+      .postmark.idle .inner { stroke-dasharray: 4 5; }
+
+      .postmark .ringlabel {
+        font-family: var(--mono);
+        font-size: 10.6px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        fill: currentColor;
+      }
+
+      .postmark .line1 {
+        font-family: var(--display);
+        font-weight: 900;
+        font-size: 16.5px;
+        letter-spacing: 0.02em;
+        text-anchor: middle;
+        fill: currentColor;
+      }
+
+      .postmark .line2 {
+        font-family: var(--mono);
+        font-size: 8.5px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-anchor: middle;
+        fill: currentColor;
+      }
+
+      .postmark.ok { color: var(--stamp-green); }
+      .postmark.bad { color: var(--stamp-red); }
+
+      @keyframes stampIn {
+        0% { transform: scale(1.7) rotate(-16deg); opacity: 0; }
+        55% { transform: scale(0.94) rotate(-5.5deg); opacity: 1; }
+        100% { transform: scale(1) rotate(-7deg); opacity: 1; }
+      }
+
+      .postmark.thunk { animation: stampIn 0.42s cubic-bezier(0.2, 1.1, 0.35, 1) both; }
+
+      /* ── FROM / TO label grid ────────────────────────────── */
+      .labelgrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border-bottom: 3px solid var(--ink);
+      }
+
+      .cell {
+        padding: 14px 18px 16px;
+        border-right: 2px solid var(--ink);
+      }
+      .cell:last-child { border-right: none; }
+
+      .cell .k {
+        display: block;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ultra);
+        margin-bottom: 6px;
+      }
+
+      .cell .v {
+        font-family: var(--display);
+        font-variation-settings: "wdth" 108;
+        font-weight: 700;
+        font-size: 14.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+      }
+
+      /* ── Sections ────────────────────────────────────────── */
+      section { padding: 26px 34px 30px; }
+
+      .tear { border-top: 2px dashed var(--ink-faint); }
+
+      .section-label {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--ultra);
+        margin: 0 0 20px;
+      }
+      .section-label::after {
+        content: "";
+        flex: 1;
+        height: 2px;
+        background: var(--ink);
+        opacity: 0.15;
+      }
+
+      /* ── Dispatch desk (controls) ────────────────────────── */
+      .controls {
+        display: flex;
+        align-items: flex-end;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .field { flex: 1 1 240px; }
+
+      .field label {
+        display: block;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        margin-bottom: 7px;
+      }
+
+      .field input {
+        width: 100%;
+        font-family: var(--mono);
+        font-size: 14px;
+        color: var(--ink);
+        background: var(--paper-2);
+        border: 2px solid var(--ink);
+        border-radius: 0;
+        padding: 11px 13px;
+      }
+      .field input::placeholder { color: var(--ink-faint); }
+
+      .btn {
+        font-family: var(--display);
+        font-variation-settings: "wdth" 110;
+        font-weight: 800;
+        font-size: 13.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink);
+        border: 2px solid var(--ink);
+        border-radius: 0;
+        padding: 12px 20px;
+        cursor: pointer;
+        box-shadow: 3px 3px 0 var(--ink);
+        transition: transform 0.06s ease, box-shadow 0.06s ease;
+      }
+      .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+      .btn:disabled { opacity: 0.55; cursor: wait; }
+      .btn.primary { background: var(--marigold); }
+      .btn.primary:hover:not(:disabled) { background: #f7ad14; }
+      .btn.ghost { background: var(--paper); }
+      .btn.ghost:hover:not(:disabled) { background: var(--paper-2); }
+
+      input:focus-visible, .btn:focus-visible {
+        outline: 3px solid var(--ultra);
+        outline-offset: 2px;
+      }
+
+      /* Console — the telex line */
+      .console {
+        margin-top: 20px;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-left: 4px solid var(--ink);
+        padding: 12px 16px;
+        white-space: pre-line;
+      }
+      .console.ok { border-left-color: var(--stamp-green); color: var(--stamp-green); }
+      .console.bad { border-left-color: var(--stamp-red); color: var(--stamp-red); }
+
+      /* Inspection report */
+      .inspection { margin-top: 18px; }
+      .inspection[hidden] { display: none; }
+
+      .insp-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 9px 2px;
+        border-bottom: 1px dashed var(--ink-faint);
+      }
+
+      .insp-row .what { color: var(--ink); }
+      .insp-row .note {
+        display: block;
+        font-size: 11.5px;
+        color: var(--ink-soft);
+        margin-top: 3px;
+        max-width: 60ch;
+      }
+      .insp-row .mark { font-weight: 600; letter-spacing: 0.12em; white-space: nowrap; }
+      .insp-row .mark.ok { color: var(--stamp-green); }
+      .insp-row .mark.bad { color: var(--stamp-red); }
+      .insp-row .mark.dim { color: var(--ink-soft); }
+
+      .insp-foot {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+      }
+
+      /* ── Routing manifest ────────────────────────────────── */
+      .steps {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 2px solid var(--ink);
+      }
+
+      .steps li { padding: 16px 18px 20px; border-right: 2px solid var(--ink); }
+      .steps li:last-child { border-right: none; }
+
+      .steps .num {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        color: var(--ultra);
+      }
+
+      .steps h3 {
+        font-family: var(--display);
+        font-variation-settings: "wdth" 115;
+        font-weight: 800;
+        font-size: 16px;
+        text-transform: uppercase;
+        margin: 6px 0 8px;
+      }
+
+      .steps p {
+        font-size: 13px;
+        color: var(--ink-soft);
+        margin: 0;
+      }
+
+      /* ── Footer ──────────────────────────────────────────── */
+      .foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        flex-wrap: wrap;
+        padding: 18px 34px 22px;
+        border-top: 3px solid var(--ink);
+      }
+
+      .foot .notes { max-width: 58ch; font-size: 13px; color: var(--ink-soft); }
+      .foot .notes p { margin: 0 0 6px; }
+      .foot .notes p:last-child { margin: 0; }
+
+      .foot .sig {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        text-align: right;
+        align-self: flex-end;
+      }
+
+      /* ── Page-load reveal ────────────────────────────────── */
+      @media (prefers-reduced-motion: no-preference) {
+        .masthead, .labelgrid, section, .foot {
+          animation: rise 0.5s ease both;
         }
+        .labelgrid { animation-delay: 0.07s; }
+        section.desk { animation-delay: 0.14s; }
+        section.manifest { animation-delay: 0.21s; }
+        .foot { animation-delay: 0.28s; }
+        @keyframes rise {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: none; }
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .postmark.thunk { animation: none; }
+        .btn { transition: none; }
+      }
+
+      /* ── Responsive ──────────────────────────────────────── */
+      @media (max-width: 780px) {
+        .masthead { flex-direction: column; padding: 26px 22px 22px; }
+        .stamp-slot { width: 128px; height: 128px; align-self: flex-end; margin: -30px 6px -6px 0; }
+        section { padding: 22px 22px 26px; }
+        .foot { padding: 16px 22px 20px; }
+        .labelgrid { grid-template-columns: 1fr 1fr; }
+        .cell:nth-child(2) { border-right: none; }
+        .cell:nth-child(-n + 2) { border-bottom: 2px solid var(--ink); }
+        .steps { grid-template-columns: 1fr 1fr; }
+        .steps li:nth-child(2) { border-right: none; }
+        .steps li:nth-child(-n + 2) { border-bottom: 2px solid var(--ink); }
+      }
+
+      @media (max-width: 480px) {
+        .labelgrid { grid-template-columns: 1fr; }
+        .cell { border-right: none !important; border-bottom: 2px solid var(--ink); }
+        .cell:last-child { border-bottom: none; }
+        .steps { grid-template-columns: 1fr; }
+        .steps li { border-right: none !important; border-bottom: 2px solid var(--ink); }
+        .steps li:last-child { border-bottom: none; }
+        .controls .btn { flex: 1 1 100%; }
       }
     </style>
   </head>
   <body>
-    <main>
-      <header>
+    <main class="waybill">
+      <div class="airmail" aria-hidden="true"></div>
+
+      <header class="masthead">
         <div>
-          <h1>SUNDAY — Find Me A Job</h1>
-          <p>One of the jobs I gave SUNDAY: she finds AI/ML fresher roles every morning.</p>
+          <p class="eyebrow">Personal dispatch service</p>
+          <h1>Sunday</h1>
+          <p class="tagline">“Sunday is my Friday.”</p>
+          <p class="lede">
+            Every morning at 10:00 IST she finds AI/ML intern and fresher roles,
+            ranks them against the real résumé, and mails the top five to your
+            inbox as a ready-to-send packet.
+          </p>
+        </div>
+        <div class="stamp-slot">
+          <svg id="postmark" class="postmark idle" viewBox="0 0 160 160" aria-hidden="true">
+            <defs>
+              <filter id="inkrough" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n" />
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" />
+              </filter>
+              <path id="ringtext" d="M80,80 m-59,0 a59,59 0 1,1 118,0 a59,59 0 1,1 -118,0" />
+            </defs>
+            <g filter="url(#inkrough)">
+              <circle class="ring outer" cx="80" cy="80" r="74" />
+              <circle class="ring inner" cx="80" cy="80" r="45" />
+              <text class="ringlabel">
+                <textPath href="#ringtext" startOffset="2">SUNDAY DISPATCH SERVICE · NEW DELHI · 10:00 IST ·</textPath>
+              </text>
+              <text id="stampLine1" class="line1" x="80" y="78">AWAITING</text>
+              <text id="stampLine2" class="line2" x="80" y="95">INSPECTION</text>
+            </g>
+          </svg>
         </div>
       </header>
 
-      <section class="panel">
-        <div class="row">
-          <div>
-            <label for="secret">Run secret</label>
-            <input id="secret" type="password" autocomplete="current-password" placeholder="Enter your dashboard secret" />
+      <div class="labelgrid" aria-label="Packet details">
+        <div class="cell"><span class="k">From</span><span class="v">Sunday · Dispatch desk</span></div>
+        <div class="cell"><span class="k">To</span><span class="v">Your inbox</span></div>
+        <div class="cell"><span class="k">Contents</span><span class="v">1 résumé · 5 cover letters</span></div>
+        <div class="cell"><span class="k">Schedule</span><span class="v">Daily · 10:00 IST</span></div>
+      </div>
+
+      <section class="desk" aria-label="Dispatch desk">
+        <h2 class="section-label">Dispatch desk</h2>
+        <div class="controls">
+          <div class="field">
+            <label for="secret">App secret</label>
+            <input id="secret" type="password" autocomplete="current-password" placeholder="Paste your app secret" />
           </div>
-          <div class="actions">
-            <button id="statusButton" class="secondary" type="button">Check Status</button>
-            <button id="runButton" type="button">Run Now</button>
-          </div>
+          <button id="statusButton" type="button" class="btn ghost">Check status</button>
+          <button id="runButton" type="button" class="btn primary">Dispatch now</button>
         </div>
+
+        <div id="console" class="console" role="status">Standing by. The packet goes out on schedule at 10:00 IST — or dispatch one now.</div>
+
+        <div id="health" class="inspection" aria-live="polite" hidden></div>
       </section>
 
-      <section class="panel">
-        <div id="status" class="status">Ready. Schedule this Vercel endpoint in cron-job.org for 10:00 AM IST, or click Run Now anytime.</div>
-        <div id="health" class="status" style="margin-top:12px; display:none; white-space:pre-line;"></div>
+      <section class="manifest tear" aria-label="Routing manifest">
+        <h2 class="section-label">Routing manifest</h2>
+        <ol class="steps">
+          <li>
+            <span class="num">01</span>
+            <h3>Search</h3>
+            <p>Scans public boards — LinkedIn, Indeed, RemoteOK and more — for AI/ML intern and fresher roles.</p>
+          </li>
+          <li>
+            <span class="num">02</span>
+            <h3>Rank</h3>
+            <p>Scores every posting against the real résumé. Truthful ATS matching, no keyword stuffing.</p>
+          </li>
+          <li>
+            <span class="num">03</span>
+            <h3>Create</h3>
+            <p>Renders the résumé once, then writes one tailored cover letter per company.</p>
+          </li>
+          <li>
+            <span class="num">04</span>
+            <h3>Send</h3>
+            <p>Mails the top five to your inbox. Reply with a company name and she applies for you.</p>
+          </li>
+        </ol>
       </section>
 
-      <section class="panel">
-        <table>
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>What happens</th>
-              <th>Technical word</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Search</td>
-              <td>Finds public India AI/ML intern and fresher openings.</td>
-              <td>Source adapters</td>
-            </tr>
-            <tr>
-              <td>Rank</td>
-              <td>Scores each job against your real resume.</td>
-              <td>ATS match score</td>
-            </tr>
-            <tr>
-              <td>Create</td>
-              <td>Makes truthful resume and cover letter PDFs.</td>
-              <td>PDF generation</td>
-            </tr>
-            <tr>
-              <td>Send</td>
-              <td>Emails the best 5 job packets to you.</td>
-              <td>SMTP email</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <footer class="foot">
+        <div class="notes">
+          <p>Reply to any packet with just a company name — Sunday rebuilds the application and, when a recruiter address exists, sends it on your behalf.</p>
+          <p>She never mails the same company twice.</p>
+        </div>
+        <div class="sig">Sunday — Find Me A Job<br />Est. 2026 · New Delhi</div>
+      </footer>
     </main>
 
     <script>
-      const button = document.querySelector("#runButton");
+      const runButton = document.querySelector("#runButton");
       const statusButton = document.querySelector("#statusButton");
-      const statusBox = document.querySelector("#status");
+      const consoleBox = document.querySelector("#console");
       const healthBox = document.querySelector("#health");
       const secretInput = document.querySelector("#secret");
+      const postmark = document.querySelector("#postmark");
+      const stampLine1 = document.querySelector("#stampLine1");
+      const stampLine2 = document.querySelector("#stampLine2");
 
       secretInput.value = localStorage.getItem("jobAssistantSecret") || "";
 
-      function setStatus(text, kind) {
-        statusBox.textContent = text;
-        statusBox.className = "status" + (kind ? " " + kind : "");
+      function setConsole(text, kind) {
+        consoleBox.textContent = text;
+        consoleBox.className = "console" + (kind ? " " + kind : "");
       }
 
-      function tick(ok) {
-        return ok ? "✅" : "❌";
+      function setStamp(state, line1, line2) {
+        postmark.classList.remove("idle", "ok", "bad", "thunk");
+        postmark.classList.add(state);
+        stampLine1.textContent = line1;
+        stampLine2.textContent = line2;
+        if (state !== "idle") {
+          void postmark.getBoundingClientRect();
+          postmark.classList.add("thunk");
+        }
+      }
+
+      function stampDate() {
+        return new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+      }
+
+      function inspRow(what, ok, note) {
+        const mark = ok === null ? '<span class="mark dim">—</span>' : ok ? '<span class="mark ok">CLEAR</span>' : '<span class="mark bad">FAULT</span>';
+        const noteHtml = note ? '<span class="note">' + escapeHtml(note) + "</span>" : "";
+        return '<div class="insp-row"><span class="what">' + escapeHtml(what) + noteHtml + "</span>" + mark + "</div>";
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       }
 
       function renderHealth(data) {
         const lastRun = data.lastRun
-          ? `last run ${new Date(data.lastRun.ran_at).toLocaleString()} - ${data.lastRun.status}` +
-            (data.lastRun.email_status ? ` (email: ${data.lastRun.email_status})` : "") +
-            (data.lastRun.error ? ` - ${data.lastRun.error}` : "")
+          ? new Date(data.lastRun.ran_at).toLocaleString() + " — " + data.lastRun.status +
+            (data.lastRun.email_status ? " (email: " + data.lastRun.email_status + ")" : "") +
+            (data.lastRun.error ? " — " + data.lastRun.error : "")
           : "no runs recorded yet";
-        const warnings = (data.config.warnings || []).length
-          ? "\nNotes: " + data.config.warnings.join(" ")
-          : "";
-        healthBox.style.display = "block";
-        healthBox.className = "status " + (data.ok ? "ok" : "bad");
-        healthBox.textContent =
-          `${tick(data.ok)} Overall: ${data.ok ? "healthy" : "needs attention"}\n` +
-          `${tick(data.gmail.ok)} Gmail (send + replies)${data.gmail.ok ? "" : " - " + (data.gmail.error || "unreachable")}\n` +
-          `${tick(data.supabase.ok)} Supabase (history)${data.supabase.ok ? "" : " - " + (data.supabase.error || "unreachable")}\n` +
-          `${tick(data.config.ok)} Required config present\n` +
-          `🕒 ${lastRun}` + warnings;
+
+        let html = "";
+        html += inspRow("Gmail — send + replies", data.gmail.ok, data.gmail.ok ? "" : data.gmail.error || "unreachable");
+        html += inspRow("Supabase — memory", data.supabase.ok, data.supabase.ok ? "" : data.supabase.error || "unreachable");
+        html += inspRow("Required config", data.config.ok, data.config.ok ? "" : (data.config.errors || []).join(" "));
+        html += inspRow("Last run — " + lastRun, null, "");
+        if ((data.config.warnings || []).length) {
+          html += '<p class="insp-foot">NOTE: ' + escapeHtml(data.config.warnings.join(" ")) + "</p>";
+        }
+        healthBox.innerHTML = html;
+        healthBox.hidden = false;
+
+        if (data.ok) {
+          setStamp("ok", "ALL CLEAR", stampDate());
+          setConsole("Inspection passed. Sunday is in service.", "ok");
+        } else {
+          setStamp("bad", "ATTENTION", "SEE DESK");
+          setConsole("Inspection found a fault — details below.", "bad");
+        }
       }
 
       async function checkStatus() {
         const secret = secretInput.value.trim();
         localStorage.setItem("jobAssistantSecret", secret);
         statusButton.disabled = true;
-        healthBox.style.display = "block";
-        healthBox.className = "status";
-        healthBox.textContent = "Checking status...";
+        setConsole("Inspecting the service…");
         try {
           const response = await fetch("/api/health?secret=" + encodeURIComponent(secret));
           const data = await response.json();
           if (response.status === 401) throw new Error(data.error || "Wrong secret.");
           renderHealth(data);
         } catch (error) {
-          healthBox.className = "status bad";
-          healthBox.textContent = "Status check failed: " + error.message;
+          setConsole("Status check failed: " + error.message, "bad");
+          setStamp("bad", "ATTENTION", "SEE DESK");
         } finally {
           statusButton.disabled = false;
         }
       }
 
-      statusButton.addEventListener("click", checkStatus);
-      if (secretInput.value.trim()) checkStatus();
-
-      button.addEventListener("click", async () => {
+      async function dispatchNow() {
         const secret = secretInput.value.trim();
         localStorage.setItem("jobAssistantSecret", secret);
-        button.disabled = true;
-        setStatus("Starting the Vercel job assistant. This can take a little while because it is searching, creating PDFs, and emailing them.", "");
-
+        runButton.disabled = true;
+        setConsole("Dispatching… searching boards, ranking, writing PDFs, mailing. This takes a minute or two.");
         try {
           const response = await fetch("/api/run-now", {
             method: "POST",
@@ -320,16 +633,29 @@
             body: JSON.stringify({ secret })
           });
           const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.error || "Run request failed.");
-          }
-          setStatus("Run finished. Check your Gmail for the packet. If email secrets are missing, the API response will still show the run result.", "ok");
+          if (!response.ok) throw new Error(data.error || "Run request failed.");
+          const count = (data.topJobs || []).length;
+          setConsole(
+            (data.emailStatus === "sent"
+              ? "Packet dispatched — " + count + " companies on their way to your inbox."
+              : data.message || "Run finished.") +
+              (data.runId ? "\nRun " + data.runId + " · " + data.totalRawJobs + " jobs found · " + data.totalDomainFitJobs + " matched." : ""),
+            "ok"
+          );
         } catch (error) {
-          setStatus(error.message, "bad");
+          setConsole(error.message, "bad");
         } finally {
-          button.disabled = false;
+          runButton.disabled = false;
         }
+      }
+
+      statusButton.addEventListener("click", checkStatus);
+      runButton.addEventListener("click", dispatchNow);
+      secretInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") checkStatus();
       });
+
+      if (secretInput.value.trim()) checkStatus();
     </script>
   </body>
 </html>
